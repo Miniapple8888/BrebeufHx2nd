@@ -29,11 +29,12 @@ class User {
 }
 let userList = [];
 
+/*
 //-----------------------------------
 //      client code, put in webpage
 //-----------------------------------
 
-let /*User to represent themselves*/ user
+let user
 
 const ws = new WebSocket('ws://' + window.location.host);
 //connection init
@@ -49,7 +50,7 @@ ws.on("message", function (message) {
     console.log(msg.body);
   }
 });
-
+*/
 //---------------------------
 //      server
 //---------------------------

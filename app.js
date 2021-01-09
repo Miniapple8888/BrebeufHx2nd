@@ -46,5 +46,11 @@ var server = http.createServer((request, response) => {
 
 var MSGApp = MessageApp.UserMessageApplication(server);
 
+
+//---------------------------------------------------------------------------------------
+//    whenever updating data and sending it to mysql call MSGApp.updateUserList(userList)
+//---------------------------------------------------------------------------------------
+
+
 // Start server
 server.listen(8080);
