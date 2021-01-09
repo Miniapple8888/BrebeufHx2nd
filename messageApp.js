@@ -68,7 +68,7 @@ class UserMessageApplication{
         let msg = JSON.parse(message);
         if (msg.header == "init") {
           userList[msg.body.id].client = ws;
-          ws.send({ header: "initUser", body: userList[msg.body.id] });
+          ws.send({ header: "wsInitUser", body: userList[msg.body.id] });
         } else if(msg.header=="userMsg") {
           for (let usr in userList) {
             if (msg.body.recipient.id == usr.id) {

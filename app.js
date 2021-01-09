@@ -1,4 +1,3 @@
-//npm install jsdom jquery ws mysql
 let connection = require('/config.js');
 let MessageApp=require("./messageApp.js");
 const JSDOM=require("jsdom");
@@ -10,6 +9,18 @@ const url = require("url");
 
 // Create server
 var server = http.createServer((request, response) => {
+  if(request.method=="POST"){
+    //code to add user to db
+    var body = ''
+    request.on('data', function (data) {
+      body += data
+    })
+    request.on('end', function () {
+      //body processing
+    })
+  }else{
+
+  }
   var pathname = url.parse(request.url).pathname.substr(1);
   if (pathname == "" || pathname == "login" || pathname == "login.html") {//checks the pathname after the name of server. ex: 127.0.0.1:8080/webpage pathname = webpage
     fs.readFile("login.html", function (err, data) { // Read and prepare login.html page
