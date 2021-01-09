@@ -82,13 +82,63 @@ server.post('/users/token', authenticateToken, (req, res) => {
   return res.send({ message: "Success", accessToken: accessToken}); //Return token to user
 });
 
-server.post('/users/login', async (req, res) => { // Login event
+server.post('/users/removeToken', authenticateToken, (req, res) => { // Remove cookie and token
+  res.clearCookie("UserData"); // Clear the cookie
+  return res.send({message: "Disconnected."});
+});
 
+// messages, sends back list of connections to message
+server.post('/connections', (req, res)=> {
+  const user = req.body.user;
+  if(user){
+    const userid =user.id;
+    console.log(user);
+    connection.query('SELECT * FROM connections WHERE user_id_from=? OR user_id_to=?;', [userid,userid], (error, result) =>{
+      if (err) {
+        console.log({message: "Error: Could not insert"});
+        console.log(err);
+        return res.send({message: "Error: Could not insert"});
+      } else {
+        return res.send({message: result});
+      }
+    });
+  }
+});
+
+// inserts new interest
+server.post('/interests/new', (req, res) => {
+  const interestname = req.body.interestname;
+  const dateTime  = getCurrentDateTime();
+  connection.query("INSERT INTO interests (interest_name, date_created) VALUES(?, ?)", [interestname, dateTime], (err, result) => {
+    if (err) {
+      console.log({message: "Error: Could not insert"});
+      console.log(err);
+      return res.send({message: "Error: Could not insert"});
+    } else {
+      return res.send({message: "Successfully added new interest"});
+    }
+  })
+});
+
+// user interest
+server.post('/user-interests', (req, res) => {
+  const userid = req.body.userid;
+  const interestid = req.body.interestid;
+  connection.query("INSERT INTO user_interests (interest_id, user_id) VALUES(?, ?)", [interestid, userid], (err, result) => {
+    if (err) {
+      console.log({message: "Error: Could not insert"});
+      console.log(err);
+      return res.send({message: "Error: Could not insert"});
+    } else {
+      return res.send({message: "Successfully added new interest to user!"});
+    }
+  })
+});
+
+server.post('/users/login', async (req, res) => { // Login event
   const email = req.body.email;
   const password = req.body.password;
-
   // SHOULD CHECK IF EMAIL EXISTS IN DATABASE ALREADY BEFORE PROCEEDING
-
   connection.query("SELECT password_hash FROM users WHERE email = ?", [email], async function(err, result){ // Check credentials with database
     if (err) {
       return res.send({message: "Error: Incorrect email or password."});
@@ -117,7 +167,6 @@ server.post('/users/login', async (req, res) => { // Login event
 // }).then((response)=> { });
 
 server.post('/users/get_user', (req, res) => { // Access user profile info event
-  console.log()
   if(req.body.user_email){
     connection.query("SELECT * FROM users WHERE email = ?;", [req.body.user_email], (err, result) => { // Add account to database
       if (err) {
@@ -149,21 +198,33 @@ server.post('/users/profile', authenticateToken, (req, res) => { // Access user 
       console.log(err);
       return res.send({message: "Error: Could not get user."});
     }else{
-      let user={
-        id: result[0].id,
-        first_name:result[0].first_name,
-        last_name:result[0].last_name,
-        email:result[0].email,
-        speaking_language:result[0].speaking_language,
-        preferred_language:result[0].preferred_language,
-        location:result[0].location
-      };
-      return res.send({user:user});
+      // fetch user interests
+      connection.query("select i.interest_name from user_interests u inner join interests i on u.interest_id=i.id where u.user_id=?;", [result[0].id], (err, result2) => {
+        if(err) {
+          console.log({message: "Error: Could not get user."});
+          console.log(err);
+          return res.send({message: "Error: Could not get user."});
+        } else {
+          console.log(result);
+          let user={
+            id: result[0].id,
+            first_name:result[0].first_name,
+            last_name:result[0].last_name,
+            email:result[0].email,
+            speaking_language:result[0].speaking_language,
+            preferred_language:result[0].preferred_language,
+            location:result[0].location,
+            interests:result2
+          }
+          return res.send({ user: user});
+        }
+      })
     }
   });
 });
 
-server.post('/user/list',(req,res)=>{
+    
+server.post('/users/list',(req,res)=>{
   var arr=[];
   connection.query("SELECT * FROM users WHERE email = *;", [], async (err, result) => { // Add account to database
     if (err) {
@@ -185,16 +246,20 @@ server.post('/user/list',(req,res)=>{
   return res.send({list:arr});
 });
 
-server.post('/users/match', (req,res) =>{ 
+server.post('/validate', authenticateToken, (req, res) => { // Check if user is log in  (token is still valid).
+  return res.send({ message: "Valid" });
+});
+
+server.post('/users/match', (req, res) => {
   // retrieve current user
-  const user  = req.body.user;
+  const user  =  q.body.user;
   const userid = user.id;
   const preferred_lang  = user.preferred_language;
-  const speaking_lang = user.speaking_language;
+  const speaking_lang = user.speaking_language; 
   const dateTime = getCurrentDateTime()
-  // searches in database for match
+  // searches in databa se for match 
   connection.query("SELECT * FROM users WHERE preferred_language=? AND speaking_language=? ;", [speaking_lang, preferred_lang], async (err, result) => { // Add account to database
-    if (err) {
+    if (err) {  
       console.log({message: "Error: Could not get user."});
       console.log(err);
       return res.send({message: "Error: Could not get user."});
@@ -205,11 +270,11 @@ server.post('/users/match', (req,res) =>{
 
         var match = result[0];
         console.log(user);
-        // add contact 
+        // add cont act  
         connection.query('INSERT INTO connections (user_id_from, user_id_to, created_at) VALUES(?,?,?);', [userid, match.
-          id, dateTime], (err, result2) => {
+          id, dateTime] , (err, result2) => { 
             if (err) {
-              console.log({message: "Error: Could not insert"});
+              console.log({message: "Error: Could not insert"}); 
               console.log(err);
               return res.send({message: "Error: Could not insert"});
             } else {
@@ -218,41 +283,11 @@ server.post('/users/match', (req,res) =>{
             }
         });
       } else {
-        return res.send({message: "No match :(("});
+        return res. send({message: "No match :(("}); 
       }
-    }
+    }  
   });
 });
-
-// inserts new interest
-server.post('/interests/new', (req, res) => {
-  const interestname = req.body.interestname;
-  const dateTime  = getCurrentDateTime();
-  connection.query("INSERT INTO interests (interest_name, date_created) VALUES(?, ?)", [interestname, dateTime], (err, result) => {
-    if (err) {
-      console.log({message: "Error: Could not insert"});
-      console.log(err);
-      return res.send({message: "Error: Could not insert"});
-    } else {
-      return res.send({message: "Successfully added new interest"});
-    }
-  })
-});
-
-// user interest
-server.post('/user-interests', (req, res) => {
-  const userid = req.body.userid;
-  const interestid = req.body.interestid;
-  connection.query("INSERT INTO user_interests (interest_id, user_id) VALUES(?, ?)", [interest_id, user_id], (err, result) => {
-    if (err) {
-      console.log({message: "Error: Could not insert"});
-      console.log(err);
-      return res.send({message: "Error: Could not insert"});
-    } else {
-      return res.send({message: "Successfully added new interest to user!"});
-    }
-  })
-})
 
 //list interests
 server.post('/interests/list', (req, res) => {
@@ -261,20 +296,11 @@ server.post('/interests/list', (req, res) => {
       console.log({message: "Error: Could not insert"});
       console.log(err);
       return res.send({message: "Error: Could not insert"});
-    } else {
+    } else{
       console.log(result);
-      return res.send({interests: result});
+      return res.send({interests:result});
     }
-  })
-})
-
-server.post('/validate', authenticateToken, (req, res) => { // Check if user is log in  (token is still valid).
-  return res.send({message: "Valid"});
-});
-
-server.post('/users/removeToken', authenticateToken, (req, res) => { // Remove cookie and token
-  res.clearCookie("UserData"); // Clear the cookie
-  return res.send({message: "Disconnected."});
+  });
 });
 
 // messages, sends back list of connections to message
@@ -330,72 +356,3 @@ function getCurrentDateTime() {
   var time = today.getHours() + "-" + today.getMinutes() + "-" + today.getSeconds();
   return date+' '+time;
 }
-
-
-// let connection = require('/config.js');
-// let MessageApp=require("./messageApp.js");
-// const JSDOM=require("jsdom");
-// const http=require("http");
-// const $=require("jquery");
-// const fs = require("fs");
-// const url = require("url");
-// 
-// 
-// // Create server
-// var server = http.createServer((request, response) => {
-//   if(request.method=="POST"){
-//     //code to add user to db
-//     var body = ''
-//     request.on('data', function (data) {
-//       body += data
-//     })
-//     request.on('end', function () {
-//       //body processing
-//     })
-//   }else{
-
-//   }
-//   var pathname = url.parse(request.url).pathname.substr(1);
-//   if (pathname == "" || pathname == "login" || pathname == "login.html") {//checks the pathname after the name of server. ex: 127.0.0.1:8080/webpage pathname = webpage
-//     fs.readFile("login.html", function (err, data) { // Read and prepare login.html page
-//       if (err) { // Error handler (i mean it would be a big problem if login.html was not there)
-//         console.log(err);
-//         response.writeHead(404, { "Content-Type": "text/html" });
-//         response.end();
-//       } else {
-//         response.writeHead(200, { "Content-Type": "text/html" }); // Send the page to user
-//         var html = data.toString();
-//         const page = new JSDOM(html);
-//         //if needed some JQuery stuff
-//         response.write(page.serialize()); 
-//         response.end();
-//       }
-//     });
-//   } else {
-//     fs.readFile(pathname, function (err, data) { // Find requested page
-//         if (err) { // Error handler
-//           console.log(err);
-//           response.writeHead(404, { "Content-Type": "text/html" });
-//           response.end();
-//         } else {
-//           response.writeHead(200, { "Content-Type": "text/html" }); // Send the page to user
-//           var html = data.toString();
-//           const page = new JSDOM(html);
-//           //if needed some JQuery stuff
-//           response.write(page.serialize()); 
-//           response.end();
-//         }
-//     });
-//   }
-// });
-
-// var MSGApp = MessageApp.UserMessageApplication(server);
-
-
-// //---------------------------------------------------------------------------------------
-// //    whenever updating data and sending it to mysql call MSGApp.updateUserList(userList)
-// //---------------------------------------------------------------------------------------
-
-
-// // Start server
-// server.listen(8080);

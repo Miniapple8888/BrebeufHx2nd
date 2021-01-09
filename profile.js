@@ -29,6 +29,12 @@ $(document).ready(()=>{
     $('#email').text(user.email);
     $('#speaking-language').text(user.speaking_language);
     $('#preferred-language').text(user.preferred_language);
+    // retrieve user interests
+    for(var i=0;i<user.interests.length;i++) {
+      let interest = user.interests[i];
+      console.log(interest);
+      $('#interests ul').append("<li>"+interest.interest_name+"</li>");
+    }
   });
 
 });

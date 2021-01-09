@@ -43,19 +43,37 @@ ws.on("message", function (message) {
 //---------------------------
 //           server
 //---------------------------
+var wsClients={};
 class UserMessageApplication{
   constructor(server){
     const expressWs = require('express-ws')(server);
     //init websocket
-    this.wsClients={};
+    wsClients={'test':'test'};
     server.ws('/', (ws, req) => {
       ws.on("message", function (message) {
+        // console.log("socketconnections = " + JSON.stringify(wsClients));
         let msg = JSON.parse(message);
         if (msg.header == "init") {
-          this.wsClients[msg.body.email] = ws;
+          if(msg.body.user){
+            wsClients[msg.body.email] = ws;
+          }
         } else if (msg.header == "userMsg") {
           console.log(message);
-          this.wsClients[msg.body.recipient.email].send(message);
+          // console.log("socketconnections = " + JSON.stringify(wsClients));
+          if(wsClients){
+            if(wsClients[msg.body.recipient.email]){
+              wsClients[msg.body.recipient.email].send(message);
+            }
+            // else{
+            //   wsClients[msg.body.sender.email].send({
+            //     header: "userMsg", body: {
+            //       body: "User offline", date: new Date(),
+            //       language: user.preferred_language,
+            //       sender: msg.body.sender,
+            //       recipient: msg.body.sender
+            //     }});
+            // }
+          }
         }
       });
     });

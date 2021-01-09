@@ -17,7 +17,8 @@ $(document).ready(() =>{
     });
     $('#user-interest-button').on('click', ()=>{
         console.log("Clicked!");
-        var interestid=Number($('interest-id').val());
+        var interestid=Number($('#interest-id').val());
+        console.log(interestid);
         axios.post("/user-interests", {
             interestid:interestid,
             userid:user.id
