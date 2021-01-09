@@ -23,6 +23,7 @@ L'utilisateur peut se déconnecter.
 
 # Les Difficultés rencontrées
 - mysql
+- loading images
 - heroku
 
 # Ce que nous avions appris

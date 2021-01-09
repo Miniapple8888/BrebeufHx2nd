@@ -1,101 +1,346 @@
-let connection = require('./config.js');
-let MessageApp = require("./messageApp.js");
-const JSDOM = require("jsdom");
-const http = require("http");
-const $ = require("jquery");
+// Secret key for jwt (was generated randomly)
+const ACCESS_TOKEN_SECRET = "133fb998c60fdaa6af5613b2670c2c3d5eb8a8d2bad8269c744b554b4dd24e9625d4efdbe3b56ebea2226a2daad84ffc4f8549a25a407b15d8dcfc8f6da65d6d";
+//const REFRESH_TOKEN_SECRET = "dfff6c808d7472f6cfa04b604846a45c4bceb06955cd2a66e4e1f3040107070a1173befc0f85ab9b406c548feb4aae76e1dada42aee3709ade0ad0da281c0764";
+
+let connection = require('./database.js').connection; // Database MySQL
+const express = require('express');
+const cors = require("cors");
+const bcrypt = require('bcrypt')
+const jwt = require('jsonwebtoken');
+const path = require('path');
 const fs = require("fs");
-const url = require("url");
+const cookieParser = require('cookie-parser');
+let msgApp=require("./messageApp.js")
 
+const server = express(); // Server app
+server.use(express.json());
+server.use(cors());
+server.use(cookieParser());
+server.get("*", (req, res, next) => {
 
-var totalUserCount = 0;
-//structure of a user, if info is missing just add it, a javascript object is dynamically typed anyway
-class user {
-  constructor(
-    firstName, lastName,
-    ID = totalUserCount,
-    preferredLanguage,
-    speakingLanguages,
-    Interests,
-    email,
-    location,
-    //profilePic, ? idk how to implement this
-    contacts) {
-    this.firstName = firstName;
-    this.lastName = lastName;
-    this.ID = ID;
-    this.preferredLanguage = preferredLanguage;
-    this.speakingLanguages = speakingLanguages
-    this.Interests = Interests;
-    this.email = email;
-    this.location = location;
-    this.contacts = contacts;
-    this.client=null;
-    this.online=true;
+  if (req.url === '/' || req.url === '#' || req.url === '') { //Default page
+    return res.sendFile(path.join(__dirname + "/index.html"));
   }
-}
 
-var users = [];
+  if (fs.existsSync(path.join(__dirname + req.url))) { // Any other web page available
 
-// Create server
-var server = http.createServer((request, response) => {
-  if (request.method == "POST") {
-    //code to add user to db
-    var body = ''
-    request.on('data', function (data) {
-      body += data
-    })
-    request.on('end', function () {
-      //body processing
-    })
-  } else {
+    return res.sendFile(path.join(__dirname + req.url));
+  
+  } else { // If page could not be found, then return 404
+    res.status(404); // Error 404, page not found
+    return res.send('404: File Not Found' + req.url);
 
   }
-  var pathname = url.parse(request.url).pathname.substr(1);
-  if (pathname == "" || pathname == "login" || pathname == "login.html") {//checks the pathname after the name of server. ex: 127.0.0.1:8080/webpage pathname = webpage
-    fs.readFile("login.html", function (err, data) { // Read and prepare login.html page
-      if (err) { // Error handler (i mean it would be a big problem if login.html was not there)
-        console.log(err);
-        response.writeHead(404, { "Content-Type": "text/html" });
-        response.end();
-      } else {
-        response.writeHead(200, { "Content-Type": "text/html" }); // Send the page to user
-        var html = data.toString();
-        const page = new JSDOM(html);
-        //if needed some JQuery stuff
-        response.write(page.serialize());
-        response.end();
+  
+});
+
+server.post('/users/signup', async (req, res) => { // Register event
+  const email = req.body.email;
+  const password = req.body.password;
+  const first_name = req.body.first_name;
+  const last_name = req.body.last_name;
+  const spoken_language = req.body.spoken_language;
+  const preferred_language = req.body.preferred_language;
+  const location = req.body.location;
+  const profilepic = req.body.profilepic;
+   // get current date
+  var dateTime = getCurrentDateTime();
+  // Server side validation of credentials
+  if (email === "" || email == null) {
+    return res.send({message: "Email is invalid."});
+  }
+  if (req.body.password.length < 6) {
+    return res.send({message: "A minimum password length of 6 characters is required."});
+  }
+  connection.query("SELECT * FROM users WHERE email = ?", [email], async function(err, result){ // Check if email exists already in database
+    if (err) {
+      console.log({message: "Error"});
+      return res.send({message: "Error"});
+    }else{
+      if(result.length>0){
+        return res.send({message: "Error: User exists already."});
+      }else{
+        const hashedPassword = await bcrypt.hash(req.body.password, 10); // Encrypt password
+        connection.query("INSERT INTO users (email, first_name, last_name, password_hash, speaking_language, preferred_language, location, date_created) VALUES (?,?,?,?,?,?,?,?);", [email, first_name, last_name, hashedPassword, spoken_language, preferred_language, location, dateTime], (err, req) => { // Add account to database
+          if (err) {
+            console.log({message: "Error: Could not create the account."});
+            console.log(err);
+            return res.send({message: "Error: Could not create the account."});
+          }else{
+            return res.send({message: "Successfully created and account. You can now log in."});
+          }
+        });
       }
-    });
-  } else {
-    fs.readFile(pathname, function (err, data) { // Find requested page
-      if (err) { // Error handler
-        console.log(err);
-        response.writeHead(404, { "Content-Type": "text/html" });
-        response.end();
+    }
+  });
+});
+
+server.post('/users/token', authenticateToken, (req, res) => {
+  var accessToken = generateAccessToken(req.user.email); // Generate new token
+  res.cookie("UserData", accessToken, {maxAge: 360000});
+  return res.send({ message: "Success", accessToken: accessToken}); //Return token to user
+});
+
+server.post('/users/login', async (req, res) => { // Login event
+
+  const email = req.body.email;
+  const password = req.body.password;
+
+  // SHOULD CHECK IF EMAIL EXISTS IN DATABASE ALREADY BEFORE PROCEEDING
+
+  connection.query("SELECT password_hash FROM users WHERE email = ?", [email], async function(err, result){ // Check credentials with database
+    if (err) {
+      return res.send({message: "Error: Incorrect email or password."});
+    }
+    if (result.length > 0) {
+      if (await bcrypt.compare(password, result[0].password_hash)) { // Check if valid hash password from database (result)
+        // Logged in
+        const accessToken = generateAccessToken(email); // Create user JWT token for user
+        res.cookie("UserData", accessToken);
+        return res.send({ message: "Success", accessToken: accessToken}); //Return token to user
       } else {
-        response.writeHead(200, { "Content-Type": "text/html" }); // Send the page to user
-        var html = data.toString();
-        const page = new JSDOM(html);
-        //if needed some JQuery stuff
-        response.write(page.serialize());
-        response.end();
+        // Incorrect password
+        return res.send({message: "Error: Incorrect email or password."});
       }
-    });
+    } else {
+      return res.send({message: "Error: Incorrect email or password."});
+    }
+  });
+});
+
+// EXAMPLE HOW TO ACCESS PROFILE
+// axios.post("/users/profile", {
+//   headers: {
+//     'Authorization': ACCESS TOKEN FROM VARIABLE OR document.cookie.split('=')[1]
+//   }
+// }).then((response)=> { });
+
+server.post('/users/get_user', (req, res) => { // Access user profile info event
+  if(req.user_email){
+    connection.query("SELECT * FROM users WHERE email = ?;", [req.user_email], (err, result) => { // Add account to database
+      if (err) {
+        console.log({message: "Error: Could not get user."});
+        console.log(err);
+        return res.send({message: "Error: Could not get user."});
+      }else{
+        if(result.length>0){
+          let user={  
+            first_name:result[0].first_name,
+            last_name:result[0].last_name,
+            email:result[0].email,
+            speaking_language:result[0].speaking_language,
+            preferred_language:result[0].preferred_language
+          }; 
+          return res. send({user:user});
+        }else{
+          return res.send({message: "Error: Could not get user."});
+        }
+      }
+    });   
   }
 });
 
-var MSGApp = new MessageApp.UserMessageApplication(server, []);
+server.post('/users/profile', authenticateToken, (req, res) => { // Access user profile info event
+  connection.query("SELECT * FROM users WHERE email = ?;", [req.user.email], (err, result) => { // Add account to database
+    if (err) {
+      console.log({message: "Error: Could not get user."});
+      console.log(err);
+      return res.send({message: "Error: Could not get user."});
+    }else{
+      let user={
+        first_name:result[0].first_name,
+        last_name:result[0].last_name,
+        email:result[0].email,
+        speaking_language:result[0].speaking_language,
+        preferred_language:result[0].preferred_language,
+        location:result[0].location
+      };
+      return res.send({user:user});
+    }
+  });
+});
 
+server.post('/user/list',(req,res)=>{
+  var arr=[];
+  connection.query("SELECT * FROM users WHERE email = *;", [], async (err, result) => { // Add account to database
+    if (err) {
+      console.log({message: "Error: Could not get user."});
+      console.log(err);
+      return res.send({message: "Error: Could not get user."});
+    }else{
+      let user={
+        first_name:result[0].first_name,
+        last_name:result[0].last_name,
+        email:result[0].email,
+        speaking_language:result[0].speaking_language,
+        preferred_language:result[0].preferred_language,
+        location:result[0].location
+      };
+      arr.push(user);
+    }
+  });
+  return res.send({list:arr});
+});
 
-//---------------------------------------------------------------------------------------
-//    whenever updating data and sending it to db call MSGApp.updateUserList(userList)
-//---------------------------------------------------------------------------------------
-function createUser(user){
-  users.push(user);
-  MSGApp.updateUserList(users);
+server.post('/users/match', (req,res) =>{ 
+  // retrieve current user
+  const user  = req.body.user;
+  const userid = user.id;
+  const preferred_lang  = user.preferred_language;
+  const speaking_lang = user.speaking_language;
+  connection.query("SELECT * FROM users WHERE preferred_language=? AND speaking_language=? ;", [speaking_lang, preferred_lang], async (err, result) => { // Add account to database
+    if (err) {
+      console.log({message: "Error: Could not get user."});
+      console.log(err);
+      return res.send({message: "Error: Could not get user."});
+    }else{
+      console.log(result);
+      return res.send({message: result});
+    }
+  });
+})
+
+// inserts new interest
+server.post('/interests/new', (req, res) => {
+  const interestname = req.body.interestname;
+  const dateTime  = getCurrentDateTime();
+  connection.query("INSERT INTO interests (interest_name, date_created) VALUES(?, ?)", [interestname, dateTime], (err, result) => {
+    if (err) {
+      console.log({message: "Error: Could not insert"});
+      console.log(err);
+      return res.send({message: "Error: Could not insert"});
+    } else {
+      return res.send({message: "Successfully added new interest"});
+    }
+  })
+})
+
+// user interest
+server.post('/user-interests', (req, res) => {
+  const userid = req.body.userid;
+  const interestid = req.body.interestid;
+  connection.query("INSERT INTO user_interests (interest_id, user_id) VALUES(?, ?)", [interest_id, user_id], (err, result) => {
+    if (err) {
+      console.log({message: "Error: Could not insert"});
+      console.log(err);
+      return res.send({message: "Error: Could not insert"});
+    } else {
+      return res.send({message: "Successfully added new interest to user!"});
+    }
+  })
+})
+
+server.post('/validate', authenticateToken, (req, res) => { // Check if user is log in  (token is still valid).
+  return res.send({message: "Valid"});
+});
+
+server.post('/users/removeToken', authenticateToken, (req, res) => { // Remove cookie and token
+  res.clearCookie("UserData"); // Clear the cookie
+  return res.send({message: "Disconnected."});
+});
+
+server.listen(8081, () => {
+  console.log("Server is running.");
+});
+
+function authenticateToken(req, res, next) {
+  let authHeader;
+  if(req.headers.cookie){
+    authHeader = req.headers.cookie.split(',')[0].split("=")[1]; // Get token
+  }else{
+    return res.sendStatus(403)
+  }
+  // EXPECTED HEADER WITH Axios (view login.js and signup.js)
+  // headers: {
+  //   'Authorization': 'Bearer'
+  // }
+  const token = authHeader;
+  if (token == null) return res.sendStatus(401); // Invalid or null token
+
+  jwt.verify(token, ACCESS_TOKEN_SECRET, (err, user) => { // Verify token and extract user
+    if (err) return res.sendStatus(403); // Invalid or expired token
+    req.user = user; // Use user.email to get email addrs
+    next();
+  });
 }
 
+function generateAccessToken(email) {
+  return jwt.sign({email: email}, ACCESS_TOKEN_SECRET, { expiresIn: '20m' }); // Generate access token that expires in 20 min
+}
+
+function getCurrentDateTime() {
+  var today = new Date();
+  var date = today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate();
+  var time = today.getHours() + "-" + today.getMinutes() + "-" + today.getSeconds();
+  return date+' '+time;
+}
+
+var MSGApp = new msgApp.UserMessageApplication(server,connection);
+
+// let connection = require('/config.js');
+// let MessageApp=require("./messageApp.js");
+// const JSDOM=require("jsdom");
+// const http=require("http");
+// const $=require("jquery");
+// const fs = require("fs");
+// const url = require("url");
+// 
+// 
+// // Create server
+// var server = http.createServer((request, response) => {
+//   if(request.method=="POST"){
+//     //code to add user to db
+//     var body = ''
+//     request.on('data', function (data) {
+//       body += data
+//     })
+//     request.on('end', function () {
+//       //body processing
+//     })
+//   }else{
+
+//   }
+//   var pathname = url.parse(request.url).pathname.substr(1);
+//   if (pathname == "" || pathname == "login" || pathname == "login.html") {//checks the pathname after the name of server. ex: 127.0.0.1:8080/webpage pathname = webpage
+//     fs.readFile("login.html", function (err, data) { // Read and prepare login.html page
+//       if (err) { // Error handler (i mean it would be a big problem if login.html was not there)
+//         console.log(err);
+//         response.writeHead(404, { "Content-Type": "text/html" });
+//         response.end();
+//       } else {
+//         response.writeHead(200, { "Content-Type": "text/html" }); // Send the page to user
+//         var html = data.toString();
+//         const page = new JSDOM(html);
+//         //if needed some JQuery stuff
+//         response.write(page.serialize()); 
+//         response.end();
+//       }
+//     });
+//   } else {
+//     fs.readFile(pathname, function (err, data) { // Find requested page
+//         if (err) { // Error handler
+//           console.log(err);
+//           response.writeHead(404, { "Content-Type": "text/html" });
+//           response.end();
+//         } else {
+//           response.writeHead(200, { "Content-Type": "text/html" }); // Send the page to user
+//           var html = data.toString();
+//           const page = new JSDOM(html);
+//           //if needed some JQuery stuff
+//           response.write(page.serialize()); 
+//           response.end();
+//         }
+//     });
+//   }
+// });
+
+// var MSGApp = MessageApp.UserMessageApplication(server);
 
 
-// Start server
-server.listen(8080);
+// //---------------------------------------------------------------------------------------
+// //    whenever updating data and sending it to mysql call MSGApp.updateUserList(userList)
+// //---------------------------------------------------------------------------------------
+
+
+// // Start server
+// server.listen(8080);

@@ -5,8 +5,7 @@ var Websocket = require("ws");
 
 //message object
 class userMessage {
-  constructor(header, body, date, language, sender, recipient) {
-    this.header = header;
+  constructor(body, date, language, sender, recipient) {
     this.body = body;
     this.date = date;
     this.language = language;
@@ -49,31 +48,24 @@ ws.on("message", function (message) {
 //           server
 //---------------------------
 class UserMessageApplication{
-  constructor(server,userList){
+  constructor(server,connection){
     //init websocket
     this.wsServer = new Websocket.Server({
       server
     });
-    this.userList=userList;
+    this.wsClients={};
+    //---- TODO: implement better solution to keep userlist
     //setup websocket connection
     this.wsServer.on("connection", function (ws) {
       ws.on("message", function (message) {
         let msg = JSON.parse(message);
         if (msg.header == "init") {
-          this.userList[msg.body.id].client = ws;
-          ws.send({ header: "wsInitUser", body: this.userList[msg.body.id] });
+          this.wsClients[msg.body.email] = ws;
         } else if(msg.header=="userMsg") {
-          for (let usr in this.userList) {
-            if (usr.online&&msg.body.recipient.id == usr.id) {
-              usr.client.send(message);
-            }
-          }
+          this.wsClients[msg.body.recipient.email].send(message);
         }
       });
     });
-  }
-  updateUserList(userList){
-    this.userList=userList;
   }
 }
 

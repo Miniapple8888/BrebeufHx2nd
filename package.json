@@ -1,0 +1,34 @@
+{
+  "name": "brebeufhx2nd",
+  "version": "1.0.0",
+  "description": "Hackathon",
+  "main": "app.js",
+  "dependencies": {
+    "bcrypt": "^5.0.0",
+    "cookie-parser": "^1.4.5",
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "express-session": "^1.17.1",
+    "jquery": "^3.5.1",
+    "jsdom": "^16.4.0",
+    "jsonwebtoken": "^8.5.1",
+    "mysql": "^2.18.1",
+    "node-gyp": "^7.1.2",
+    "pg": "^8.5.1",
+    "ws": "^7.4.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Miniapple8888/BrebeufHx2nd.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Miniapple8888/BrebeufHx2nd/issues"
+  },
+  "homepage": "https://github.com/Miniapple8888/BrebeufHx2nd#readme"
+}
