@@ -1,15 +1,44 @@
-let connection = require('/config.js');
-let MessageApp=require("./messageApp.js");
-const JSDOM=require("jsdom");
-const http=require("http");
-const $=require("jquery");
+let connection = require('./config.js');
+let MessageApp = require("./messageApp.js");
+const JSDOM = require("jsdom");
+const http = require("http");
+const $ = require("jquery");
 const fs = require("fs");
 const url = require("url");
 
 
+var totalUserCount = 0;
+//structure of a user, if info is missing just add it, a javascript object is dynamically typed anyway
+class user {
+  constructor(
+    firstName, lastName,
+    ID = totalUserCount,
+    preferredLanguage,
+    speakingLanguages,
+    Interests,
+    email,
+    location,
+    //profilePic, ? idk how to implement this
+    contacts) {
+    this.firstName = firstName;
+    this.lastName = lastName;
+    this.ID = ID;
+    this.preferredLanguage = preferredLanguage;
+    this.speakingLanguages = speakingLanguages
+    this.Interests = Interests;
+    this.email = email;
+    this.location = location;
+    this.contacts = contacts;
+    this.client=null;
+    this.online=true;
+  }
+}
+
+var users = [];
+
 // Create server
 var server = http.createServer((request, response) => {
-  if(request.method=="POST"){
+  if (request.method == "POST") {
     //code to add user to db
     var body = ''
     request.on('data', function (data) {
@@ -18,7 +47,7 @@ var server = http.createServer((request, response) => {
     request.on('end', function () {
       //body processing
     })
-  }else{
+  } else {
 
   }
   var pathname = url.parse(request.url).pathname.substr(1);
@@ -33,34 +62,39 @@ var server = http.createServer((request, response) => {
         var html = data.toString();
         const page = new JSDOM(html);
         //if needed some JQuery stuff
-        response.write(page.serialize()); 
+        response.write(page.serialize());
         response.end();
       }
     });
   } else {
     fs.readFile(pathname, function (err, data) { // Find requested page
-        if (err) { // Error handler
-          console.log(err);
-          response.writeHead(404, { "Content-Type": "text/html" });
-          response.end();
-        } else {
-          response.writeHead(200, { "Content-Type": "text/html" }); // Send the page to user
-          var html = data.toString();
-          const page = new JSDOM(html);
-          //if needed some JQuery stuff
-          response.write(page.serialize()); 
-          response.end();
-        }
+      if (err) { // Error handler
+        console.log(err);
+        response.writeHead(404, { "Content-Type": "text/html" });
+        response.end();
+      } else {
+        response.writeHead(200, { "Content-Type": "text/html" }); // Send the page to user
+        var html = data.toString();
+        const page = new JSDOM(html);
+        //if needed some JQuery stuff
+        response.write(page.serialize());
+        response.end();
+      }
     });
   }
 });
 
-var MSGApp = MessageApp.UserMessageApplication(server);
+var MSGApp = new MessageApp.UserMessageApplication(server, []);
 
 
 //---------------------------------------------------------------------------------------
-//    whenever updating data and sending it to mysql call MSGApp.updateUserList(userList)
+//    whenever updating data and sending it to db call MSGApp.updateUserList(userList)
 //---------------------------------------------------------------------------------------
+function createUser(user){
+  users.push(user);
+  MSGApp.updateUserList(users);
+}
+
 
 
 // Start server

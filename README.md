@@ -22,6 +22,8 @@ Il y aurait un historique des choses
 L'utilisateur peut se déconnecter.
 
 # Les Difficultés rencontrées
+- mysql
+- heroku
 
 # Ce que nous avions appris
 

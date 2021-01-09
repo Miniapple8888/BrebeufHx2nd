@@ -1,3 +1,4 @@
+/*
 let mysql = require('mysql')
 
 let username = "id15872316_dfsdfs999";
@@ -20,4 +21,8 @@ if(!err){
     console.log("Error while connecting with database");
 }
 });
-module.exports = connection;
+module.exports = {connection};
+*/
+const { Client } = require('pg')
+const client = new Client()
+client.connect()
