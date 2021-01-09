@@ -6,6 +6,7 @@
 
 // let connection = require('/config.js');
 
+var ws = Web
 
 $('#login-button').on('click', function() { // Login button pressed
     console.log("Login clicked.");
@@ -13,5 +14,6 @@ $('#login-button').on('click', function() { // Login button pressed
     var email = $('#email').val();
     var rawPassword = $('#password').val();
 
-    
+
+
 })
