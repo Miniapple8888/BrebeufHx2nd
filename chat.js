@@ -1,6 +1,10 @@
 var user;
 var recipient;
+
 $(document).ready(()=>{
+
+  sessionStorage.setItem("recipient", "miniapple888@gmail.com");
+
   axios.post("/users/profile", {}).then((response) => {
     user = response.data.user;
   });
@@ -11,10 +15,29 @@ $(document).ready(()=>{
   });
 
   window.WebSocket = window.WebSocket || window.MozWebSocket;
-  var ws = new WebSocket('wss://' + window.location.host);
+  var ws = new WebSocket('ws://' + window.location.host);
   //connection init
-  ws.onopen= function () {
-    ws.send({ header: "init", body: user });
+  ws.onopen = function () {
+    ws.send(JSON.stringify({ header: "init", body: user }));
+    $("#chat_box_input").on('keyup', function (e) {
+      if (e.key === 'Enter' || e.keyCode === 13) {
+        //rename to actual text field
+        var text = $("#chat_box_input").val();
+        $("#chat_box_input").val(""); // Clear input box
+        ws.send(JSON.stringify({
+          header: "userMsg", body:
+          {
+            body: text, date: new Date(),
+            language: user.preferred_language,
+            sender: user,
+            recipient: recipient
+          }
+        }));
+      }
+    });
+    ws.onmessage=function(message){
+      alert("new message\n"+message);
+    };
   };
   ws.onmessage = function (message) {
     let msg = JSON.parse(message);
@@ -23,21 +46,5 @@ $(document).ready(()=>{
     }
   };
 
-
-  $("#chat_box_input").on('keyup', function (e) {
-    if (e.key === 'Enter' || e.keyCode === 13) {
-      //rename to actual text field
-      var text = $("#chat_box_input").val();
-      ws.send({
-        header: "userMsg", body:
-        {
-          body: text, date: new Date(),
-          language: user.preferred_language,
-          sender: user,
-          recipient: recipient
-        }
-      });
-    }
-  });
 });
 

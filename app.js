@@ -13,12 +13,13 @@ const cookieParser = require('cookie-parser');
 let msgApp=require("./messageApp.js")
 
 const server = express(); // Server app
+var MSGApp = new msgApp.UserMessageApplication(server);
 server.use(express.json());
 server.use(cors());
 server.use(cookieParser());
-server.get("*", (req, res, next) => {
 
-  if (req.url === '/' || req.url === '#' || req.url === '') { //Default page
+server.get("*", (req, res, next) => {
+  if (req.url==="/"||req.url === '#' || req.url === '') { //Default page
     return res.sendFile(path.join(__dirname + "/index.html"));
   }
 
@@ -117,6 +118,7 @@ server.post('/users/login', async (req, res) => { // Login event
 
 server.post('/users/get_user', (req, res) => { // Access user profile info event
   if(req.user_email){
+    console.log(req.user_email);
     connection.query("SELECT * FROM users WHERE email = ?;", [req.user_email], (err, result) => { // Add account to database
       if (err) {
         console.log({message: "Error: Could not get user."});
@@ -148,6 +150,7 @@ server.post('/users/profile', authenticateToken, (req, res) => { // Access user 
       return res.send({message: "Error: Could not get user."});
     }else{
       let user={
+        id: result[0].id,
         first_name:result[0].first_name,
         last_name:result[0].last_name,
         email:result[0].email,
@@ -188,17 +191,38 @@ server.post('/users/match', (req,res) =>{
   const userid = user.id;
   const preferred_lang  = user.preferred_language;
   const speaking_lang = user.speaking_language;
+  const dateTime = getCurrentDateTime()
+  // searches in database for match
   connection.query("SELECT * FROM users WHERE preferred_language=? AND speaking_language=? ;", [speaking_lang, preferred_lang], async (err, result) => { // Add account to database
     if (err) {
       console.log({message: "Error: Could not get user."});
       console.log(err);
       return res.send({message: "Error: Could not get user."});
     }else{
-      console.log(result);
-      return res.send({message: result});
+      if (result.length > 0) {
+        // generate random from user
+        console.log(result[0]);
+
+        var match = result[0];
+        console.log(user);
+        // add contact 
+        connection.query('INSERT INTO connections (user_id_from, user_id_to, created_at) VALUES(?,?,?);', [userid, match.
+          id, dateTime], (err, result2) => {
+            if (err) {
+              console.log({message: "Error: Could not insert"});
+              console.log(err);
+              return res.send({message: "Error: Could not insert"});
+            } else {
+              console.log("Successfully added new connection :" + match.first_name + "!");
+              return res.send({message: "Successfully added new interest",contact:result});
+            }
+        });
+      } else {
+        return res.send({message: "No match :(("});
+      }
     }
   });
-})
+});
 
 // inserts new interest
 server.post('/interests/new', (req, res) => {
@@ -213,7 +237,7 @@ server.post('/interests/new', (req, res) => {
       return res.send({message: "Successfully added new interest"});
     }
   })
-})
+});
 
 // user interest
 server.post('/user-interests', (req, res) => {
@@ -230,6 +254,20 @@ server.post('/user-interests', (req, res) => {
   })
 })
 
+//list interests
+server.post('/interests/list', (req, res) => {
+  connection.query("SELECT * FROM interests;", [], (err, result) => {
+    if (err) {
+      console.log({message: "Error: Could not insert"});
+      console.log(err);
+      return res.send({message: "Error: Could not insert"});
+    } else {
+      console.log(result);
+      return res.send({interests: result});
+    }
+  })
+})
+
 server.post('/validate', authenticateToken, (req, res) => { // Check if user is log in  (token is still valid).
   return res.send({message: "Valid"});
 });
@@ -237,6 +275,24 @@ server.post('/validate', authenticateToken, (req, res) => { // Check if user is 
 server.post('/users/removeToken', authenticateToken, (req, res) => { // Remove cookie and token
   res.clearCookie("UserData"); // Clear the cookie
   return res.send({message: "Disconnected."});
+});
+
+// messages, sends back list of connections to message
+server.post('/connections', (req, res)=> {
+  const user = req.body.user;
+  if(user){
+    const userid =user.id;
+    console.log(user);
+    connection.query('SELECT * FROM connections WHERE user_id_from=? OR user_id_to=?;', [userid,userid], (error, result) =>{
+      if (err) {
+        console.log({message: "Error: Could not insert"});
+        console.log(err);
+        return res.send({message: "Error: Could not insert"});
+      } else {
+        return res.send({message: result});
+      }
+    });
+  }
 });
 
 server.listen(8081, () => {
@@ -275,7 +331,6 @@ function getCurrentDateTime() {
   return date+' '+time;
 }
 
-var MSGApp = new msgApp.UserMessageApplication(server,connection);
 
 // let connection = require('/config.js');
 // let MessageApp=require("./messageApp.js");

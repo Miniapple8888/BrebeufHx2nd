@@ -1,4 +1,14 @@
 $(document).ready(() =>{
+    // retrieve user interests
+    // retrieve all interests
+    axios.post("/interests/list",{}).then((response)=> { 
+        var interests = response.data.interests;
+        for(var i=0;i<interests.length;i++) {
+            var interest = interests[i];
+            $('#interests').append("<li>"+ interest.interest_name+"<button type='button' class='btn btn-primary'>Add interests</button></li>");
+        }
+    });
+      // add new interest
     $('#new-interest-button').on('click', () => {
         let interestname = $('#interest-name').val();
         if (interestname.length < 3) {
@@ -11,6 +21,5 @@ $(document).ready(() =>{
                 alert(response.data.message);
             });
         }
-        
     })
 })

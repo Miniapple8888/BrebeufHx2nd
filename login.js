@@ -41,7 +41,7 @@ $(document).ready(() => {
             }).then((response)=> { // Server response event
                 console.log(response);
                 alert(response.data.message);
-                window.location.replace(window.location.hostname + "/profile.html"); // Redirect to profile page
+                window.location.replace("/profile.html"); // Redirect to profile page
             });
         }
     });

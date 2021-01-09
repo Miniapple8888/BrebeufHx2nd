@@ -1,7 +1,3 @@
-//inlude stuff
-//npm install jsdom jquery ws
-var Websocket = require("ws");
-
 
 //message object
 class userMessage {
@@ -48,24 +44,22 @@ ws.on("message", function (message) {
 //           server
 //---------------------------
 class UserMessageApplication{
-  constructor(server,connection){
+  constructor(server){
+    const expressWs = require('express-ws')(server);
     //init websocket
-    this.wsServer = new Websocket.Server({
-      server
-    });
     this.wsClients={};
-    //---- TODO: implement better solution to keep userlist
-    //setup websocket connection
-    this.wsServer.on("connection", function (ws) {
+    server.ws('/', (ws, req) => {
       ws.on("message", function (message) {
+        console.log(message);
         let msg = JSON.parse(message);
         if (msg.header == "init") {
-          this.wsClients[msg.body.email] = ws;
-        } else if(msg.header=="userMsg") {
-          this.wsClients[msg.body.recipient.email].send(message);
+          //this.wsClients[msg.body.email] = ws;
+        } else if (msg.header == "userMsg") {
+          // this.wsClients[msg.body.recipient.email].send(message);
         }
       });
     });
+    //setup websocket connection
   }
 }
 
