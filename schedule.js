@@ -10,7 +10,6 @@ $(document).ready(()=>{
         if (response.status == 200) { // OK status
             $('#disconnectButton').show();
             $('#match').show();
-            console.log("hey")
             displaySchedule(); // Display schedule
         } else {
             $('#disconnectButton').hide();
