@@ -60,10 +60,9 @@ class UserMessageApplication{
             console.log("error in user")
           }
         } else if (msg.header == "userMsg") {
-          // console.log("socketconnections = " + JSON.stringify(wsClients));
           if(wsClients){
             if(wsClients[msg.body.recipient.email]){
-              wsClients[msg.body.recipient.email].send(message);
+              wsClients[msg.body.recipient.email].send(JSON.stringify(msg));
             }
             else{
               wsClients[msg.body.sender.email].send({

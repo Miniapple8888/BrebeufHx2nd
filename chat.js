@@ -3,7 +3,7 @@ var recipient;
 
 $(document).ready(() => {
 
-  sessionStorage.setItem("recipient", "antoinechevalier@me.com");
+  sessionStorage.setItem("recipient", "miniapple8888@gmail.com");
 
   window.WebSocket = window.WebSocket || window.MozWebSocket;
   var ws = new WebSocket('ws://' + window.location.host);
@@ -37,10 +37,10 @@ $(document).ready(() => {
       }
     });
     ws.onmessage = function (message) {
-      console.log(message.body);
-      if (message.header =="userMsg"){
-        console.log(message);
-        alert("new message\n"+message.body.body);
+      console.log(message.data);
+      var msg=JSON.parse(message.data);
+      if (msg.header =="userMsg"){
+        alert("new message\n"+msg.body.body);
       }
     };
   };

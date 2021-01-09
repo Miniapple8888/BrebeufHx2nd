@@ -24,7 +24,7 @@ L'utilisateur peut se déconnecter.
 # Les Difficultés rencontrées
 - mysql
 - loading images
-- heroku
+- websocket for chat
 
 # Ce que nous avions appris
 
