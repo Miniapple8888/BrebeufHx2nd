@@ -25,16 +25,6 @@ $(document).ready(()=>{
           });
       }); 
 
-    var user;
-    axios.post("/users/profile", ()=>{}).then((response) => {
-        user = response.data.user;
-    });
-    $('#match').on('click', function() {
-        axios.post("/users/match", { // Send match http post request to server
-            user:user
-        }).then((response)=> { // Server response event
-            console.log(response);
-        });
-    })
+    
 })
 

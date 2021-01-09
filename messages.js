@@ -22,7 +22,7 @@ $(document).ready(function () {
   }); 
 
   sessionStorage.setItem("recipient", "miniapple888@gmail.com");
-  
+
   // retrieve current user
   var user;
     axios.post("/users/profile", ()=>{}).then((response) => {

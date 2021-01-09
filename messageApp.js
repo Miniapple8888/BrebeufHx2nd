@@ -50,12 +50,12 @@ class UserMessageApplication{
     this.wsClients={};
     server.ws('/', (ws, req) => {
       ws.on("message", function (message) {
-        console.log(message);
         let msg = JSON.parse(message);
         if (msg.header == "init") {
-          //this.wsClients[msg.body.email] = ws;
+          this.wsClients[msg.body.email] = ws;
         } else if (msg.header == "userMsg") {
-          // this.wsClients[msg.body.recipient.email].send(message);
+          console.log(message);
+          this.wsClients[msg.body.recipient.email].send(message);
         }
       });
     });
