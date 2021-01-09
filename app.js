@@ -250,6 +250,21 @@ server.post('/validate', authenticateToken, (req, res) => { // Check if user is 
   return res.send({ message: "Valid" });
 });
 
+// send current user meetings
+server.post('/schedules', authenticateToken, (req, res) => { // Give schedule to user
+  const user=req.body.user;
+  const userid=user.id;
+  connection.query("SELECT * FROM meetings WHERE user_id_create=?;", [userid], (err, result) => {
+    if (err) {
+      console.log(err);
+      return res.sendStatus(403);
+    } else {
+      console.log(result);
+      return res.send({meetings:result});
+    }
+  });
+});
+
 server.post('/users/match', (req, res) => {
   // retrieve current user
   const user  =  q.body.user;

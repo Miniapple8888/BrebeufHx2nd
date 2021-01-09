@@ -5,7 +5,6 @@ $(document).ready(() => {
 
   sessionStorage.setItem("recipient", "antoinechevalier@me.com");
 
-
   window.WebSocket = window.WebSocket || window.MozWebSocket;
   var ws = new WebSocket('ws://' + window.location.host);
   //connection init
@@ -38,8 +37,11 @@ $(document).ready(() => {
       }
     });
     ws.onmessage = function (message) {
-      alert("new message\n" + message);
-      console.log(message);
+      console.log(message.body);
+      if (message.header =="userMsg"){
+        console.log(message);
+        alert("new message\n"+message.body.body);
+      }
     };
   };
 });

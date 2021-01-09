@@ -48,31 +48,32 @@ class UserMessageApplication{
   constructor(server){
     const expressWs = require('express-ws')(server);
     //init websocket
-    wsClients={'test':'test'};
+    wsClients={};
     server.ws('/', (ws, req) => {
       ws.on("message", function (message) {
         // console.log("socketconnections = " + JSON.stringify(wsClients));
         let msg = JSON.parse(message);
         if (msg.header == "init") {
-          if(msg.body.user){
+          if(msg.body){
             wsClients[msg.body.email] = ws;
+          }else{
+            console.log("error in user")
           }
         } else if (msg.header == "userMsg") {
-          console.log(message);
           // console.log("socketconnections = " + JSON.stringify(wsClients));
           if(wsClients){
             if(wsClients[msg.body.recipient.email]){
               wsClients[msg.body.recipient.email].send(message);
             }
-            // else{
-            //   wsClients[msg.body.sender.email].send({
-            //     header: "userMsg", body: {
-            //       body: "User offline", date: new Date(),
-            //       language: user.preferred_language,
-            //       sender: msg.body.sender,
-            //       recipient: msg.body.sender
-            //     }});
-            // }
+            else{
+              wsClients[msg.body.sender.email].send({
+                header: "userMsg", body: {
+                  body: "User offline", date: new Date(),
+                  language: user.preferred_language,
+                  sender: msg.body.sender,
+                  recipient: msg.body.sender
+                }});
+            }
           }
         }
       });
