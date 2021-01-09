@@ -117,6 +117,7 @@ server.post('/users/login', async (req, res) => { // Login event
 // }).then((response)=> { });
 
 server.post('/users/get_user', (req, res) => { // Access user profile info event
+  console.log()
   if(req.body.user_email){
     connection.query("SELECT * FROM users WHERE email = ?;", [req.body.user_email], (err, result) => { // Add account to database
       if (err) {
