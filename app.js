@@ -1,8 +1,8 @@
 // Secret key for jwt (was generated randomly)
 const ACCESS_TOKEN_SECRET = "133fb998c60fdaa6af5613b2670c2c3d5eb8a8d2bad8269c744b554b4dd24e9625d4efdbe3b56ebea2226a2daad84ffc4f8549a25a407b15d8dcfc8f6da65d6d";
-//const REFRESH_TOKEN_SECRET = "dfff6c808d7472f6cfa04b604846a45c4bceb06955cd2a66e4e1f3040107070a1173befc0f85ab9b406c548feb4aae76e1dada42aee3709ade0ad0da281c0764";
 
-let connection = require('./database.js').connection; // Database MySQL
+const database = require('./database.js');
+let connection = database.connection; // Database MySQL
 const express = require('express');
 const cors = require("cors");
 const bcrypt = require('bcrypt')
@@ -28,6 +28,7 @@ server.get("*", (req, res, next) => {
     return res.sendFile(path.join(__dirname + req.url));
   
   } else { // If page could not be found, then return 404
+
     res.status(404); // Error 404, page not found
     return res.send('404: File Not Found' + req.url);
 
@@ -85,24 +86,6 @@ server.post('/users/token', authenticateToken, (req, res) => {
 server.post('/users/removeToken', authenticateToken, (req, res) => { // Remove cookie and token
   res.clearCookie("UserData"); // Clear the cookie
   return res.send({message: "Disconnected."});
-});
-
-// messages, sends back list of connections to message
-server.post('/connections', (req, res)=> {
-  const user = req.body.user;
-  if(user){
-    const userid =user.id;
-    console.log(user);
-    connection.query('SELECT * FROM connections WHERE user_id_from=? OR user_id_to=?;', [userid,userid], (error, result) =>{
-      if (err) {
-        console.log({message: "Error: Could not insert"});
-        console.log(err);
-        return res.send({message: "Error: Could not insert"});
-      } else {
-        return res.send({message: result});
-      }
-    });
-  }
 });
 
 // inserts new interest
@@ -168,26 +151,7 @@ server.post('/users/login', async (req, res) => { // Login event
 
 server.post('/users/get_user', (req, res) => { // Access user profile info event
   if(req.body.user_email){
-    connection.query("SELECT * FROM users WHERE email = ?;", [req.body.user_email], (err, result) => { // Add account to database
-      if (err) {
-        console.log({message: "Error: Could not get user."});
-        console.log(err);
-        return res.send({message: "Error: Could not get user."});
-      }else{
-        if(result.length>0){
-          let user={  
-            first_name:result[0].first_name,
-            last_name:result[0].last_name,
-            email:result[0].email,
-            speaking_language:result[0].speaking_language,
-            preferred_language:result[0].preferred_language
-          }; 
-          return res. send({user:user});
-        }else{
-          return res.send({message: "Error: Could not get user."});
-        }
-      }
-    });   
+    
   }
 });
 

@@ -1,4 +1,4 @@
-
+/*
 //message object
 class userMessage {
   constructor(body, date, language, sender, recipient) {
@@ -18,26 +18,6 @@ class serverMsg {
     this.body = body;
   }
 }
-
-/*
-//-----------------------------------
-//   client code, put in webpage
-//-----------------------------------
-
-let user
-const ws = new WebSocket('ws://' + window.location.host);
-//connection init
-ws.on("open", function () {
-  ws.send({ header: "init", body: user });
-});
-ws.on("message", function (message) {
-  let msg = JSON.parse(message);
-  if (msg.header == "initUser") {
-    user = msg.body;
-  } else if (msg.header == "userMsg") {
-    console.log(msg.body);
-  }
-});
 */
 
 //---------------------------
@@ -51,7 +31,6 @@ class UserMessageApplication{
     wsClients={};
     server.ws('/', (ws, req) => {
       ws.on("message", function (message) {
-        // console.log("socketconnections = " + JSON.stringify(wsClients));
         let msg = JSON.parse(message);
         if (msg.header == "init") {
           if(msg.body){

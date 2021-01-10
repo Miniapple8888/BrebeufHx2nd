@@ -10,7 +10,6 @@ const password = "password";
 const dbname = "refugeecenter";
 const host = "localhost";
 
-// Connect to mysql
 var connection = mysql.createConnection({
 	host     : host,
 	user     : username,
@@ -19,6 +18,7 @@ var connection = mysql.createConnection({
 	insecureAuth: true
 });
 
+// Connect to mysql
 connection.connect(function(err){
 	if(!err){
  		console.log("Database is connected");
@@ -27,5 +27,36 @@ connection.connect(function(err){
 		console.log(err);
 	}
 });
+
+class database{
+	constructor(){
+	}
+	getUserByEmail(email){
+		if(email){
+			connection.query("SELECT * FROM users WHERE email = ?;", [req.body.user_email], (err, result) => { // Add account to database
+				if (err) {
+					console.log("Error: Could not get user.");
+					console.log(err);
+					return { message: "Error: Could not get user." };
+				} else {
+					if (result.length > 0) {
+						let user = {
+							first_name: result[0].first_name,
+							last_name: result[0].last_name,
+							email: result[0].email,
+							speaking_language: result[0].speaking_language,
+							preferred_language: result[0].preferred_language
+						};
+						return res.send({ user: user });
+					} else {
+						return res.send({ message: "Error: Could not get user." });
+					}
+				}
+			});  
+		}
+	}
+};
+
+
 
 module.exports = {connection};
