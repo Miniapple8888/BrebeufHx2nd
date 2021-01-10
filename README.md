@@ -25,6 +25,7 @@ L'utilisateur peut se déconnecter.
 - mysql
 - loading images
 - websocket for chat
+- computer slowed down during recording 
 
 # Ce que nous avions appris
 
