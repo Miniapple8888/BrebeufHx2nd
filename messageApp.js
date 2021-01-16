@@ -20,9 +20,53 @@ class serverMsg {
 }
 */
 
-//---------------------------
+/*
+//-----------------------------
+//       client-side 
+//-----------------------------
+  var user;
+  var recipient;
+  window.WebSocket = window.WebSocket || window.MozWebSocket;
+  var ws = new WebSocket('ws://' + window.location.host);
+  //connection init
+  ws.onopen = function () {
+    axios.post("/users/profile", {}).then((response) => {
+      user = response.data.user;
+      if (user) {
+        ws.send(JSON.stringify({ header: "init", body: user }));
+      }
+    });
+    axios.post("/users/get_user", {
+      user_email: sessionStorage.getItem("recipient")
+    }).then((response) => {
+      recipient = response.data.user;
+    });
+    //rename to actual text field
+    var text = $("#input").val();
+    ws.send(JSON.stringify({
+      header: "userMsg", body:
+        {
+          body: text, date: new Date(),
+          language: user.preferred_language,
+          sender: user,
+          recipient: recipient
+        }
+      }
+      ));
+    }
+    ws.onmessage = function (message) {
+      console.log(message.data);
+      var msg=JSON.parse(message.data);
+      if (msg.header =="userMsg"){
+        alert("new message\n"+msg.body.body);
+      }
+    };
+  };
+*/
+
+//-----------------------------
 //           server
-//---------------------------
+//-----------------------------
 var wsClients={};
 class UserMessageApplication{
   constructor(server){
@@ -36,7 +80,15 @@ class UserMessageApplication{
           if(msg.body){
             wsClients[msg.body.email] = ws;
           }else{
-            console.log("error in user")
+            console.log("error in user");
+            ws.send({
+              header: "userMsg", body: {
+                body: "User offline", date: new Date(),
+                language: "english",
+                sender: "server",
+                recipient: null
+              }
+            });
           }
         } else if (msg.header == "userMsg") {
           if(wsClients){
@@ -46,9 +98,9 @@ class UserMessageApplication{
             else{
               wsClients[msg.body.sender.email].send({
                 header: "userMsg", body: {
-                  body: "User offline", date: new Date(),
+                  body: "User offline", date: msg.date,
                   language: user.preferred_language,
-                  sender: msg.body.sender,
+                  sender: "server",
                   recipient: msg.body.sender
                 }});
             }

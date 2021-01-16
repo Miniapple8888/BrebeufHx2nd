@@ -5,6 +5,7 @@
   "main": "app.js",
   "dependencies": {
     "bcrypt": "^5.0.0",
+    "body-parser": "^1.19.0",
     "cookie-parser": "^1.4.5",
     "cors": "^2.8.5",
     "express": "^4.17.1",
@@ -13,9 +14,13 @@
     "jquery": "^3.5.1",
     "jsdom": "^16.4.0",
     "jsonwebtoken": "^8.5.1",
+    "morgan": "^1.10.0",
     "mysql": "^2.18.1",
     "node-gyp": "^7.1.2",
+    "nodemailer": "^6.4.17",
     "pg": "^8.5.1",
+    "pg-hstore": "^2.3.3",
+    "sequelize": "^6.3.5",
     "ws": "^7.4.2"
   },
   "devDependencies": {},
@@ -26,7 +31,7 @@
     "type": "git",
     "url": "git+https://github.com/Miniapple8888/BrebeufHx2nd.git"
   },
-  "author": "",
+  "author": "Antoine Chevalier, Emily Chiu, and Eduard Anton",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/Miniapple8888/BrebeufHx2nd/issues"

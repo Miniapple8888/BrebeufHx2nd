@@ -3,7 +3,7 @@ var recipient;
 
 $(document).ready(() => {
 
-  sessionStorage.setItem("recipient", "miniapple8888@gmail.com");
+  // qsessionStorage.setItem("recipient", "miniapple8888@gmail.com");
 
   window.WebSocket = window.WebSocket || window.MozWebSocket;
   var ws = new WebSocket('ws://' + window.location.host);
@@ -22,7 +22,6 @@ $(document).ready(() => {
     });
     $("#chat_box_input").on('keyup', function (e) {
       if (e.key === 'Enter' || e.keyCode === 13) {
-        //rename to actual text field
         var text = $("#chat_box_input").val();
         $("#chat_box_input").val(""); // Clear input box
         ws.send(JSON.stringify({
