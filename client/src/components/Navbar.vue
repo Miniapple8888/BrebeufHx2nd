@@ -1,6 +1,6 @@
 <template>
-    <div>
-        <b-navbar toggeable="lg" type="dark" id="navbar" sticky=true>
+    <div v-if="renderComponent">
+        <b-navbar toggeable="lg" type="dark" id="navbar" fixed="top">
             <b-navbar-brand href="/">
                 <img src="../assets/logo.png" alt="logo" id="logoicon">
                 <img src="../assets/langr.png" alt="logo" id="logoname">
@@ -19,6 +19,7 @@
                         <b-dropdown-item href="#">FA</b-dropdown-item>
                     </b-nav-item-dropdown>
                     <b-button v-if="!this.authenticated" href="/login">Log in</b-button>
+                    &nbsp;
                     <b-button v-if="!this.authenticated" href="/signup" class="btn-primary">
                     Sign up
                     </b-button>
@@ -37,6 +38,7 @@ export default {
   data() {
     return {
       authenticated: false,
+      renderComponent: true,
     };
   },
   methods: {
@@ -55,15 +57,37 @@ export default {
           // this.deleteCookie('UserData');
           // redirect home
           console.log(res.data.message);
+          this.$notify({
+            group: 'auth',
+            type: 'success',
+            text: 'Successfully logged out!',
+          });
           // Todo: avoid redundancy redirecting to home if already at home
           this.$router.push('/');
+          Object.assign(this.$data, this.$options.data.call(this)); // re render component
         }).catch((e) => {
           console.log(e);
         });
     },
+    reRender() {
+      console.log('called');
+      this.renderComponent = false;
+      this.$nextTick(() => {
+        this.renderComponent = true;
+      });
+    },
   },
   created() {
     console.log(this.matchCookie('UserData'));
+    if (this.matchCookie('UserData')) {
+      this.authenticated = true;
+    }
+  },
+  mounted() {
+    this.$root.$on('refresh-navbar', () => {
+      console.log('I received it!');
+      this.reRender();
+    });
     if (this.matchCookie('UserData')) {
       this.authenticated = true;
     }
@@ -73,6 +97,7 @@ export default {
 <style scoped>
 #navbar {
     z-index: 100;
+    background: #ffffff;
 }
 #logoicon {
     display: inline-block;

@@ -1,6 +1,18 @@
 <template>
     <div class="container">
+      <!-- Need to put this in a component  -->
+      <div v-if="errors.length > 0">
+        <b-alert show variant="danger">
+          <ul>
+            <li v-for="error in errors" v-bind:key="error.msg">
+              {{ error.msg }}
+            </li>
+          </ul>
+        </b-alert>
+      </div>
+      <div class="loader" v-if="loading"></div>
         <b-form @submit="onSubmit" v-if="show">
+            <fieldset :disabled="loading">
             <b-form-group
             id="firstname-group"
             label="First Name"
@@ -9,20 +21,8 @@
                 id="firstName"
                 v-model="form.firstName"
                 type="text"
-                placeholder="First Name"
-                required
-                :state="firstNameValidation"
-                aria-describedby="firstname-help-block">
+                placeholder="First Name">
                 </b-form-input>
-                <b-form-text id="firstname-help-block">
-                    Your first name must be 2-20 characters long and contain only letters.
-                </b-form-text>
-                <b-form-invalid-feedback :state="firstNameValidation">
-                    Your first name must be 2-20 characters long and contain only letters.
-                </b-form-invalid-feedback>
-                <b-form-valid-feedback :state="firstNameValidation">
-                    Looks Good.
-                </b-form-valid-feedback>
             </b-form-group>
             <b-form-group
             id="lastname-group"
@@ -32,20 +32,8 @@
                 id="lastName"
                 v-model="form.lastName"
                 type="text"
-                placeholder="Last Name"
-                required
-                :state="lastNameValidation"
-                aria-describedby="lastname-help-block">
+                placeholder="Last Name">
                 </b-form-input>
-                <b-form-text id="lastname-help-block">
-                    Your last name must be 2-20 characters long and contain only letters.
-                </b-form-text>
-                <b-form-invalid-feedback :state="lastNameValidation">
-                    Your last name must be 2-20 characters long and contain only letters.
-                </b-form-invalid-feedback>
-                <b-form-valid-feedback :state="lastNameValidation">
-                    Looks Good.
-                </b-form-valid-feedback>
             </b-form-group>
             <b-form-group
             id="email-group"
@@ -55,8 +43,8 @@
                 id="email"
                 v-model="form.email"
                 type="email"
-                placeholder="Email"
-                required></b-form-input>
+                placeholder="Email">
+                </b-form-input>
             </b-form-group>
             <b-form-group
             id="password-group"
@@ -66,15 +54,8 @@
                 id="password"
                 v-model="form.password"
                 type="password"
-                placeholder="Password"
-                required
-                aria-describedby="password-help-block">
+                placeholder="Password">
                 </b-form-input>
-                <b-form-text id="password-help-block">
-                    Your password must be 8-20 characters long,
-                    contain letters and numbers, and must not
-                    contain spaces, special characters, or emoji.
-                </b-form-text>
             </b-form-group>
             <b-form-group
             id="confirmpassword-group"
@@ -84,24 +65,36 @@
                 id="confirmPassword"
                 v-model="form.confirmPassword"
                 type="password"
-                placeholder="Confirm Password"
-                :state="confirmPasswordValidation"
-                required></b-form-input>
-                <b-form-invalid-feedback :state="confirmPasswordValidation">
-                    Both passwords must match!
-                </b-form-invalid-feedback>
-                <b-form-valid-feedback :state="confirmPasswordValidation">
-                    Looks Good.
-                </b-form-valid-feedback>
+                placeholder="Confirm Password">
+                </b-form-input>
             </b-form-group>
-            <label for="tags-basic">Type a new interest and press enter</label>
-            <b-form-tags input-id="tags-basic" v-model="form.interests"></b-form-tags>
-            <p class="mt-2">Value: {{ form.interests }}</p>
-            <b-form-group label="Tagged input using select" label-for="tags-component-select">
+            <b-form-group>
+              <label for="tags-basic">Type a new interest and press enter</label>
+              <b-form-tags input-id="tags-basic" v-model="form.interests"></b-form-tags>
+            </b-form-group>
+            <b-form-group label="Spoken Language(s)" label-for="tags-component-select">
+                <b-button variant="success" v-on:click="addSpokLang">
+                  Add new spoken language
+                </b-button>
+                <b-input-group prepend="Spoken Lang and proficiency" class="mb-2">
+                  <b-form-select v-model="spokenLang" :options="spokenLanguages"></b-form-select>
+                  <b-form-select v-model="profic" :options="proficiency"></b-form-select>
+                </b-input-group>
+                <ul>
+                  <li v-for="(spLang, index) in spokenLangs"
+                  v-bind:key="spLang.id"
+                  v-bind:title="spLang.spokenLang+' '+spLang.proficiency">
+                  {{ spLang.spokenLang }} : {{ spLang.proficiency }}
+                  <b-button variant="danger" v-on:click="removeSpokLang($event, index)">
+                    Remove</b-button>
+                  </li>
+                </ul>
+            </b-form-group>
+            <b-form-group label="Learning Language (s)" label-for="tags-component-select">
                 <!-- Prop `add-on-change` is needed to enable adding tags vie the `change` event -->
                 <b-form-tags
                     id="tags-component-select"
-                    v-model="spokenLanguages"
+                    v-model="learningLanguages"
                     size="lg"
                     class="mb-2"
                     add-on-change
@@ -126,7 +119,7 @@
                     >
                         <template #first>
                         <!-- This is required to prevent bugs with Safari -->
-                        <option disabled value="">Choose a language...</option>
+                        <option disabled value="">Choose your learning language (s)...</option>
                         </template>
                     </b-form-select>
                     </template>
@@ -137,12 +130,23 @@
                 v-model="form.agreeTermsServices"
                 id="agree-terms-services"
                 :aria-describedby="ariaDescribedby">
-                    <b-form-checkbox value="agree-terms-services">
+                    <b-form-checkbox value="agreed" unchecked-value="not_agreed">
                         Agree to our Terms & Services
                     </b-form-checkbox>
                 </b-form-checkbox-group>
             </b-form-group>
-            <b-button type="submit" variant="primary">Submit</b-button>
+            <b-form-group>
+              <b-form-file
+              v-model="form.profilepic"
+              :state="Boolean(form.profilepic)"
+              placeholder="Choose a file or drop it here..."
+              drop-placeholder="Drop file here...">
+            </b-form-file>
+            </b-form-group>
+            <b-form-group>
+              <b-button type="submit" variant="primary">Create a New Account</b-button>
+            </b-form-group>
+        </fieldset>
         </b-form>
         <b-card class="mt-3" header="Form Data Result">
             <pre class="m-0">{{ form }}</pre>
@@ -162,43 +166,78 @@ export default {
         password: '',
         confirmPassword: '',
         interests: [],
-        agreeTermsServices: '',
+        agreeTermsServices: 'not_agreed',
+        profilepic: null,
       },
       options: ['French', 'English', 'Spanish'],
-      spokenLanguages: [],
+      learningLanguages: [],
+      errors: [],
       show: true,
+      loading: false,
+      selected: null,
+      spokenLanguages: [
+        { value: 'English', text: 'English' },
+        { value: 'French', text: 'French' },
+        { value: 'Spanish', text: 'Spanish' },
+      ],
+      proficiency: [
+        { value: 'Beginner', text: 'Beginner' },
+        { value: 'Intermediate', text: 'Intermediate' },
+        { value: 'Advanced', text: 'Advanced' },
+      ],
+      spokenLangs: [],
+      spokenLang: '',
+      profic: '',
+      spkLangId: 1,
     };
   },
   computed: {
     availableOptions() {
       return this.options.filter((opt) => this.spokenLanguages.indexOf(opt) === -1);
     },
-    firstNameValidation() {
-      return this.form.firstName.length > 1 && this.form.firstName.length < 21;
-    },
-    lastNameValidation() {
-      return this.form.lastName.length > 1 && this.form.lastName.length < 21;
-    },
-    confirmPasswordValidation() {
-      return this.form.confirmPassword === this.form.password;
-    },
   },
   methods: {
     onSubmit(event) {
       event.preventDefault();
-
       const data = {
         firstName: this.form.firstName,
         lastName: this.form.lastName,
         email: this.form.email,
         password: this.form.password,
+        confirmPassword: this.form.confirmPassword,
+        interests: this.form.interests,
       };
+      this.loading = true;
       http.post('/signup', data).then((res) => {
-        console.log(res);
-        alert(res.data.message);
+        if (res.data.errors != null) { // Check for any incoming errors
+          this.errors = res.data.errors;
+        } else {
+          // Send flash notification successfully created account
+          this.$notify({
+            group: 'auth',
+            type: 'success',
+            text: 'Successfully created account and sent verification email!',
+          });
+          // Redirect user to homepage
+          this.$router.push('/');
+        }
       }).catch((e) => {
         console.log(e);
+      }).finally(() => {
+        this.loading = false;
       });
+    },
+    addSpokLang() {
+      this.spokenLangs.push({
+        id: this.spkLangId,
+        spokenLang: this.spokenLang,
+        proficiency: this.profic,
+      });
+      this.spkLangId += 1;
+    },
+    removeSpokLang(e, index) {
+      const filtersList = this.spokenLangs.filter((element) => element !== index);
+      this.spokenLangs = filtersList;
     },
   },
   head: {
@@ -210,3 +249,23 @@ export default {
   },
 };
 </script>
+<style scoped>
+.container {
+  position: relative;
+}
+.loader{  /* Loader Div Class */
+    position: absolute;
+    top:0px;
+    right:0px;
+    width:100%;
+    height:100%;
+    background-color:#eceaea;
+    background-image: url('../assets/loader.gif');
+    background-size: 50px;
+    background-repeat:no-repeat;
+    background-position:center;
+    z-index:10000000;
+    opacity: 0.4;
+    filter: alpha(opacity=40);
+}
+</style>

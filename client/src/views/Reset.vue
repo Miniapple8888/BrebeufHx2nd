@@ -1,5 +1,14 @@
 <template>
     <div>
+        <div v-if="errors.length > 0">
+          <b-alert show variant="danger">
+            <ul>
+              <li v-for="error in errors" v-bind:key="error.msg">
+                {{ error.msg }}
+              </li>
+            </ul>
+          </b-alert>
+        </div>
         <b-form @submit="onSubmit">
             <b-form-group
             id="password-group"
@@ -44,6 +53,7 @@ export default {
         password: '',
         confirmPassword: '',
       },
+      errors: [],
       email: '',
     };
   },
@@ -52,24 +62,39 @@ export default {
       event.preventDefault();
       // check if both password match
       // secure password sending cross server...
-      if (this.email.length > 0) {
-        http.post('/reset', { password: this.form.password, email: this.email })
-          .then((res) => {
-            alert(res.data.message);
-          }).catch((e) => {
-            console.log(e);
-          });
-      }
+      http.post('/reset', { password: this.form.password, email: this.email, confirmPassword: this.form.confirmPassword })
+        .then((res) => {
+          if (res.data.errors != null) {
+            this.errors = res.data.errors;
+          } else {
+          // Notify user successfully reset password
+            console.log(res.data.message);
+            this.$notify({
+              group: 'auth',
+              type: 'success',
+              text: 'Successfully reset password!',
+            });
+            this.$route.push('/login');
+          }
+        }).catch((e) => {
+          console.log(e);
+        });
     },
     verifyReset() {
       const { token } = this.$route.params;
       http.post('/verify-reset', { token })
         .then((res) => {
-          if (res.data.success) {
+          if (res.data.valid) {
             this.email = res.data.email;
           } else {
             // redirect user to home page and tell them invalid token
-            alert(res.data.message);
+            console.log(res.data.error);
+            this.$notify({
+              group: 'auth',
+              type: 'error',
+              text: 'Invalid token',
+            });
+            this.$router.push('/');
           }
         }).catch((e) => {
           alert(e);
@@ -77,9 +102,9 @@ export default {
     },
   },
   computed: {
-      confirmPasswordValidation() {
-        return this.form.password === this.form.confirmPassword;
-      },
+    confirmPasswordValidation() {
+      return this.form.password === this.form.confirmPassword;
+    },
   },
   created() {
     this.verifyReset();

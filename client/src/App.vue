@@ -1,6 +1,7 @@
 <template>
   <div id="app">
     <Navbar />
+    <notifications group="auth" position="top center" class="alert" />
     <router-view/>
   </div>
 </template>
@@ -34,5 +35,9 @@ export default {
 
 #nav a.router-link-exact-active {
   color: #42b983;
+}
+
+.alert {
+  position: absolute;
 }
 </style>

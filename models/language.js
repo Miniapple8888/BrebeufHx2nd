@@ -1,23 +1,23 @@
 'use strict';
-const {
-  Model
-} = require('sequelize');
-module.exports = (sequelize, DataTypes) => {
-  class Language extends Model {
-    /**
-     * Helper method for defining associations.
-     * This method is not a part of Sequelize lifecycle.
-     * The `models/index` file will call this method automatically.
-     */
-    static associate(models) {
-      // define association here
-    }
-  };
-  Language.init({
-    language: DataTypes.STRING
-  }, {
-    sequelize,
-    modelName: 'Language',
-  });
-  return Language;
-};
+const { Model, DataTypes, Deferrable } = require('sequelize');
+const { sequelize } = require('./index.js'); // Index js file in models folder
+
+class LearningLanguage extends Model {};
+LearningLanguage.init({
+  language: DataTypes.STRING,
+}, {
+  sequelize,
+  timestamps: false,
+  modelName: 'LearningLanguage',
+});
+
+class SpokenLanguage extends Model {};
+SpokenLanguage.init({
+  language: DataTypes.STRING,
+}, {
+  sequelize,
+  timestamps: false,
+  modelName: 'SpokenLanguage',
+});
+
+module.exports = {LearningLanguage, SpokenLanguage};

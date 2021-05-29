@@ -1,20 +1,9 @@
 'use strict';
-const {
-  Model, STRING
-} = require('sequelize');
+const { Model, DataTypes, Deferrable } = require('sequelize');
+const { sequelize } = require('./index.js'); // Index js file in models folder
 
-module.exports = (sequelize, DataTypes) => {
-  class User extends Model {
-    /**
-     * Helper method for defining associations.
-     * This method is not a part of Sequelize lifecycle.
-     * The `models/index` file will call this method automatically.
-     */
-    static associate(models) {
-      // define association here
-    }
-  };
-  User.init({
+class User extends Model {};
+User.init({
     firstName: {
       type: DataTypes.STRING,
       isAlpha: true,
@@ -23,7 +12,10 @@ module.exports = (sequelize, DataTypes) => {
         notNull: {
           msg: 'Please enter your first name.'
         },
-        len: [2, 20]
+        len: {
+          args: [2, 20],
+          msg: "Must be between 2 to 20 characters.",
+        },
       }
     },
     lastName: {
@@ -31,14 +23,22 @@ module.exports = (sequelize, DataTypes) => {
       isAlpha: true,
       notNull: true,
       validate: {
-        len: [2, 20]
+        len: {
+          args: [2, 20],
+          msg: "Must be between 2 to 20 characters.",
+        },
       }
     },
     email: {
       type: DataTypes.STRING,
-      isEmail: true,
       notNull: true,
-      unique: true
+      unique: true,
+      validate: {
+        isEmail: {
+          args: true,
+          msg: "Must be a valid email.",
+        }
+      },
     },
     // TODO: Validate password before entering
     passwordHash: {
@@ -46,27 +46,34 @@ module.exports = (sequelize, DataTypes) => {
       notNull: true,
       //is: /^[0-9a-f]{64}$/i
     },
-    emailVerificationExpirationDate: {
-      type: DataTypes.DATE
-    },
     emailVerified: {
-      type: DataTypes.BOOLEAN
+      type: DataTypes.BOOLEAN,
+      allowNull: true
     },
     lastLoggedIn: {
-      type: DataTypes.DATE
+      type: DataTypes.DATE,
+      allowNull: true
     },
     loggedIn: {
-      type: DataTypes.BOOLEAN
+      type: DataTypes.BOOLEAN,
+      notNull: false,
+      defaultValue: false
     },
-    resetToken: {
-      type: DataTypes.STRING
-    },
-    resetExpiredAt: {
-      type: DataTypes.DATE
+    profilePicURL: {
+      type: DataTypes.STRING,
+      notNull: false,
     },
   }, {
     sequelize,
     modelName: 'User',
-  });
-  return User;
-};
+});
+
+module.exports = User;
+
+  // User.associate = (models) => {
+  //   User.belongsToMany(models.Interest, { 
+  //     through: 'UserInterest',
+  //     as: "interests",
+  //     foreignKey: "user_id" });
+  // };
+  // return User;

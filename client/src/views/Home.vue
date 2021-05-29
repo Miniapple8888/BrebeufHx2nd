@@ -4,6 +4,12 @@
     </div>
     <div id="darkenlayer"></div>
     <div id="overlaylayer"></div>
+    <div class="container">
+      <h1>Connect with users of similar interests and language preferences</h1>
+        <b-button>Sign up</b-button>
+        &nbsp;
+        <b-button>Learn more</b-button>
+    </div>
   </div>
 </template>
 
@@ -12,9 +18,9 @@
 export default {
   head: {
     title: {
-      inner: 'signup',
+      inner: 'Home',
       separator: ' - ',
-      complement: 'langr',
+      complement: 'Langr',
     },
   },
 };
@@ -47,5 +53,11 @@ export default {
   min-height: 665px;
   max-height: 100vh;
   z-index: 3;
+}
+.container {
+  z-index: 4;
+  position: relative;
+  color: white;
+  top: 10em;
 }
 </style>

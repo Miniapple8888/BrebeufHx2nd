@@ -1,32 +1,32 @@
 'use strict';
-const {
-  Model
-} = require('sequelize');
-module.exports = (sequelize, DataTypes) => {
-  class Interest extends Model {
-    /**
-     * Helper method for defining associations.
-     * This method is not a part of Sequelize lifecycle.
-     * The `models/index` file will call this method automatically.
-     */
-    static associate(models) {
-      // define association here
-    }
-  };
-  Interest.init({
+const { Model, DataTypes, Deferrable } = require('sequelize');
+const { sequelize } = require('./index.js'); // Index js file in models folder
+
+class Interest extends Model {};
+Interest.init({
     name: {
       type: DataTypes.STRING,
       allowNull: false,
+      unique: true,
       validate: {
         len: [3, 20],
         notNull: {
-          msg: "Please enter interest name"
+          msg: "Please enter interest name."
         }
       }
-    }
+    },
   }, {
     sequelize,
+    timestamps: false,
     modelName: 'Interest',
-  });
-  return Interest;
-};
+});
+
+module.exports = Interest;
+
+  // Interest.associate = (models) => {
+  //   Interest.belongsToMany(models.User, { 
+  //     through: 'UserInterest',
+  //     as: "users",
+  //     foreignKey: "interest_id" });
+  // }
+  // return Interest;

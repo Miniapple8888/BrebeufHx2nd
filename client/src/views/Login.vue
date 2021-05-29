@@ -1,5 +1,14 @@
 <template>
     <div class="container">
+        <div v-if="errors.length > 0">
+          <b-alert show variant="danger">
+            <ul>
+              <li v-for="error in errors" v-bind:key="error.msg">
+                {{ error.msg }}
+              </li>
+            </ul>
+          </b-alert>
+        </div>
         <b-form @submit="onSubmit" v-if="show">
             <b-form-group
             id="email-group"
@@ -53,6 +62,7 @@ export default {
         password: '',
         rememberMe: '',
       },
+      errors: [],
       show: true,
     };
   },
@@ -63,12 +73,21 @@ export default {
         email: this.form.email,
         password: this.form.password,
       };
-      console.log(data);
       http.post('/login', data).then((res) => {
         console.log(res);
-        console.log(document.cookie);
-        alert(res.data.message);
-        this.$router.push('/home');
+        if (res.data.errors != null) {
+          this.errors = res.data.errors;
+        } else {
+          // Notify user successfully logged in
+          this.$notify({
+            group: 'auth',
+            type: 'success',
+            text: 'Successfully logged in!',
+          });
+          // Redirect user to dashboard
+          this.$router.push('/');
+          this.$root.$emit('refresh-navbar');
+        }
       }).catch((e) => {
         console.log(e);
       });

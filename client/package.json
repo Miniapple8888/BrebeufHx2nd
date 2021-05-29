@@ -16,6 +16,8 @@
     "mutationobserver-shim": "^0.3.7",
     "vue": "^2.6.12",
     "vue-head": "^2.2.0",
+    "vue-notification": "^1.3.20",
+    "vue-parallaxy": "^1.1.1",
     "vue-router": "^3.2.0"
   },
   "devDependencies": {

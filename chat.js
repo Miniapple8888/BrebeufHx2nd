@@ -3,7 +3,7 @@ var recipient;
 
 $(document).ready(() => {
 
-  // qsessionStorage.setItem("recipient", "miniapple8888@gmail.com");
+  // sessionStorage.setItem("recipient", "miniapple8888@gmail.com");
 
   window.WebSocket = window.WebSocket || window.MozWebSocket;
   var ws = new WebSocket('ws://' + window.location.host);

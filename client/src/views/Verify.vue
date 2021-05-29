@@ -1,5 +1,5 @@
 <template>
-    <div>
+  <div>
         <h1 v-if="this.verified">
             Your email has been successfully verified! You may now log in.
         </h1>
@@ -15,30 +15,48 @@ export default {
   data() {
     return {
       verified: false,
+      loading: true,
     };
   },
   methods: {
     verifyAccount() {
       const { token } = this.$route.params;
+      console.log('Sent.');
+      this.loading = true;
       http.post('/verify', { token }).then((res) => {
         // verify whether token is valid
-        console.log(res);
+        console.log(res.data.verified);
         this.verified = res.data.verified;
-        alert(res.data.verified);
+        this.loading = false;
       }).catch((e) => {
         console.log(e);
       });
     },
   },
-  created() {
+  beforeMount() {
     this.verifyAccount();
   },
   head: {
     title: {
-      inner: 'verify',
+      inner: 'Verify',
       separator: ' - ',
-      complement: 'langr',
+      complement: 'Langr',
     },
   },
 };
 </script>
+<style scoped>
+.container {
+  position: relative;
+}
+.loader{  /* Loader Div Class */
+    position: absolute;
+    top:50px;
+    right:50px;
+    width:100%;
+    height:100%;
+    background-position:center;
+    z-index:10000000;
+    opacity: 1.0;
+}
+</style>

@@ -1,5 +1,14 @@
 <template>
     <div>
+      <div v-if="errors.length > 0">
+          <b-alert show variant="danger">
+            <ul>
+              <li v-for="error in errors" v-bind:key="error.msg">
+                {{ error.msg }}
+              </li>
+            </ul>
+          </b-alert>
+        </div>
         <b-form @submit="onSubmit">
             <b-form-group
             id="email-group"
@@ -25,17 +34,25 @@ export default {
       form: {
         email: '',
       },
+      errors: [],
     };
   },
   methods: {
     onSubmit(event) {
       event.preventDefault();
-      console.log('I am executed');
       http.post('/forgot', { email: this.form.email })
         .then((res) => {
-          // Successfully sent link to email to reset password
-          console.log(res.data.message);
-          alert(res.data.message);
+          console.log(res.data);
+          if (res.data.errors != null) {
+            this.errors = res.data.errors;
+          } else {
+            // Successfully sent link to email to reset password
+            this.$notify({
+              group: 'auth',
+              type: 'success',
+              text: 'Successfully sent link to email to reset password!',
+            });
+          }
         }).catch((e) => {
           console.log(e);
         });
