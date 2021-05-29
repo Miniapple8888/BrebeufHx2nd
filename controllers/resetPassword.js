@@ -31,14 +31,10 @@ module.exports = {
             jwt.verify(token, secrets[s], { algorithms: ["HS256"] }, (err, user) => { // Verify token and extract user
 
                 if (err) { // Invalid or expired token
-                    console.log("Reset token: "+token)
-                    console.log("Error" + err)
-                    console.log("Current secret: "+secrets[s])
                     if (s == secrets.length - 1) {
                         return res.status(200).send({ message: 'Invalid or expired token', valid: false })
                     }
                 } else {
-                    console.log("I'm functional!")
                     User.findAll({ where: { email: user.email }, }).then(userFound => {
                         // simple check to know whether we have a user associated to that email
                         if (userFound.length > 0) {

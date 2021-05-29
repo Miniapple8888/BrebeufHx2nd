@@ -70,7 +70,6 @@ export default {
         });
     },
     reRender() {
-      console.log('called');
       this.renderComponent = false;
       this.$nextTick(() => {
         this.renderComponent = true;
@@ -85,7 +84,6 @@ export default {
   },
   mounted() {
     this.$root.$on('refresh-navbar', () => {
-      console.log('I received it!');
       this.reRender();
     });
     if (this.matchCookie('UserData')) {

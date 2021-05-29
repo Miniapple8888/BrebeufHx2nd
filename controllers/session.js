@@ -46,7 +46,6 @@ module.exports = {
     destroy(req, res) {
         // find user make sure connected (auth)
         const email = req.currentUser.email || "";
-        console.log(req.currentUser);
         return User.findOne({
             where: {
                 email: email

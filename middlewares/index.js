@@ -10,37 +10,28 @@ module.exports = {
     authenticated(req, res, next) {
         let authHeader;
         if (req.headers.cookie){
-            console.log(req.headers.cookie) // Get token
             authHeader = getCookie(req.headers.cookie, 'UserData')
         } else {
             req.currentUser = false;
-            console.log("I am executed!")
             return next();
         }
 
         const token = authHeader;
         if (token == null) { // Invalid or null token
-            console.log("I am invalid")
             req.currentUser = false;
             return next();
         }
 
         const secrets = getSecrets(); // Retrieve list of secrets
-        console.log(secrets)
         for (var s = 0; s < secrets.length; s++) { // Check with every secret
             jwt.verify(token, secrets[s], { algorithms: ["HS256"] }, (err, user) => { // Verify token and extract user
 
                 if (err) { // Invalid or expired token
-                    console.log("token: "+token)
-                    console.log("Error" + err)
-                    console.log("Current secret: "+secrets[s])
                     if (s == secrets.length - 1) {
                         req.currentUser = false; 
-                        console.log("So what")
                         return next();
                     }
                 } else {
-                    console.log("I'm functional!")
                     req.currentUser = user; // Use user.email to get email addrs
                     return next();
                 }

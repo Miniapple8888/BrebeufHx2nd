@@ -88,7 +88,6 @@ export default {
             this.email = res.data.email;
           } else {
             // redirect user to home page and tell them invalid token
-            console.log(res.data.error);
             this.$notify({
               group: 'auth',
               type: 'error',

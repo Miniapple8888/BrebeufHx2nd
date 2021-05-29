@@ -25,7 +25,6 @@ export default {
       this.loading = true;
       http.post('/verify', { token }).then((res) => {
         // verify whether token is valid
-        console.log(res.data.verified);
         this.verified = res.data.verified;
         this.loading = false;
       }).catch((e) => {
