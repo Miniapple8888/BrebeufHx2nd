@@ -1,9 +1,11 @@
-!['client/src/assets/langr.png'](langr)
 
 # langr
 
 ## Run/Execute Project:
-
+Install packages:
+```
+npm install
+```
 Backend: running in port http://localhost:8081
 
 ```
@@ -16,6 +18,7 @@ Frontend: running in port http://localhost:8082
 cd client
 npm run serve
 ```
+Install maildev and configure to the right port to receive emails
 
 ## But du projet
 
