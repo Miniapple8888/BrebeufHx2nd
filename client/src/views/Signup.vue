@@ -236,7 +236,8 @@ export default {
       this.spkLangId += 1;
     },
     removeSpokLang(e, index) {
-      const filtersList = this.spokenLangs.filter((element) => element !== index);
+      console.log(index);
+      const filtersList = this.spokenLangs.filter((element) => element !== this.spokenLangs[index]);
       this.spokenLangs = filtersList;
     },
   },
