@@ -8,9 +8,9 @@ const bodyParser = require('body-parser'); // Parse incomming request body from 
 const app = express();
 app.use(cookieParser());
 const corsOptions = {
-  origin: 'http://localhost:8082',
+  //origin: 'http://localhost:8082',
   optionsSuccessStatus: 200,
-  credentials: true
+  //credentials: true
 }
 app.use(cors(corsOptions));
 app.use(morgan('dev'));

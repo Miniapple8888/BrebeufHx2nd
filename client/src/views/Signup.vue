@@ -77,8 +77,8 @@
                   Add new spoken language
                 </b-button>
                 <b-input-group prepend="Spoken Lang and proficiency" class="mb-2">
-                  <b-form-select v-model="spokenLang" :options="spokenLanguages"></b-form-select>
-                  <b-form-select v-model="profic" :options="proficiency"></b-form-select>
+                  <b-form-select v-model="spokenLang" :options="languages"></b-form-select>
+                  <b-form-select v-model="spkprofic" :options="proficiencies"></b-form-select>
                 </b-input-group>
                 <ul>
                   <li v-for="(spLang, index) in spokenLangs"
@@ -90,40 +90,24 @@
                   </li>
                 </ul>
             </b-form-group>
-            <b-form-group label="Learning Language (s)" label-for="tags-component-select">
-                <!-- Prop `add-on-change` is needed to enable adding tags vie the `change` event -->
-                <b-form-tags
-                    id="tags-component-select"
-                    v-model="learningLanguages"
-                    size="lg"
-                    class="mb-2"
-                    add-on-change
-                    no-outer-focus
-                >
-                    <template v-slot="{ tags, inputAttrs, inputHandlers, disabled, removeTag }">
-                    <ul v-if="tags.length > 0" class="list-inline d-inline-block mb-2">
-                        <li v-for="tag in tags" :key="tag" class="list-inline-item">
-                        <b-form-tag
-                            @remove="removeTag(tag)"
-                            :title="tag"
-                            :disabled="disabled"
-                            variant="info"
-                        >{{ tag }}</b-form-tag>
-                        </li>
-                    </ul>
-                    <b-form-select
-                        v-bind="inputAttrs"
-                        v-on="inputHandlers"
-                        :disabled="disabled || availableOptions.length === 0"
-                        :options="availableOptions"
-                    >
-                        <template #first>
-                        <!-- This is required to prevent bugs with Safari -->
-                        <option disabled value="">Choose your learning language (s)...</option>
-                        </template>
-                    </b-form-select>
-                    </template>
-                </b-form-tags>
+            <b-form-group label="Learning Language(s)" label-for="tags-component-select">
+                <b-button variant="success" v-on:click="addLearnLang">
+                  Add new learning language
+                </b-button>
+                <b-input-group prepend="Learning Lang and proficiency" class="mb-2">
+                  <b-form-select v-model="learningLang" :options="languages">
+                  </b-form-select>
+                  <b-form-select v-model="leprofic" :options="proficiencies"></b-form-select>
+                </b-input-group>
+                <ul>
+                  <li v-for="(leLang, index) in learningLangs"
+                  v-bind:key="leLang.id"
+                  v-bind:title="leLang.leLang+' '+leLang.proficiency">
+                  {{ leLang.learningLang }} : {{ leLang.proficiency }}
+                  <b-button variant="danger" v-on:click="removeLearnLang($event, index)">
+                    Remove</b-button>
+                  </li>
+                </ul>
             </b-form-group>
             <b-form-group id="checkbox-group" v-slot="{ ariaDescribedby }">
                 <b-form-checkbox-group
@@ -170,31 +154,31 @@ export default {
         profilepic: null,
       },
       options: ['French', 'English', 'Spanish'],
-      learningLanguages: [],
       errors: [],
       show: true,
       loading: false,
       selected: null,
-      spokenLanguages: [
+      languages: [
         { value: 'English', text: 'English' },
         { value: 'French', text: 'French' },
         { value: 'Spanish', text: 'Spanish' },
       ],
-      proficiency: [
+      proficiencies: [
         { value: 'Beginner', text: 'Beginner' },
         { value: 'Intermediate', text: 'Intermediate' },
         { value: 'Advanced', text: 'Advanced' },
       ],
       spokenLangs: [],
       spokenLang: '',
-      profic: '',
+      learningLangs: [],
+      learningLang: [],
+      spkprofic: '',
+      leprofic: '',
       spkLangId: 1,
+      leLangId: 1,
     };
   },
   computed: {
-    availableOptions() {
-      return this.options.filter((opt) => this.spokenLanguages.indexOf(opt) === -1);
-    },
   },
   methods: {
     onSubmit(event) {
@@ -206,6 +190,8 @@ export default {
         password: this.form.password,
         confirmPassword: this.form.confirmPassword,
         interests: this.form.interests,
+        spokenLangs: this.spokenLangs,
+        learningLangs: this.learningLangs
       };
       this.loading = true;
       http.post('/signup', data).then((res) => {
@@ -231,14 +217,25 @@ export default {
       this.spokenLangs.push({
         id: this.spkLangId,
         spokenLang: this.spokenLang,
-        proficiency: this.profic,
+        proficiency: this.spkprofic,
       });
       this.spkLangId += 1;
     },
     removeSpokLang(e, index) {
-      console.log(index);
       const filtersList = this.spokenLangs.filter((element) => element !== this.spokenLangs[index]);
       this.spokenLangs = filtersList;
+    },
+    addLearnLang() {
+      this.learningLangs.push({
+        id: this.leLangId,
+        learningLang: this.learningLang,
+        proficiency: this.leprofic,
+      });
+      this.leLangId += 1;
+    },
+    removeLearnLang(e, index) {
+      const filtersList = this.learningLangs.filter((element) => element !== this.learningLangs[index]);
+      this.learningLangs = filtersList;
     },
   },
   head: {

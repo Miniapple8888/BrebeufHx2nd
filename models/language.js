@@ -2,22 +2,16 @@
 const { Model, DataTypes, Deferrable } = require('sequelize');
 const { sequelize } = require('./index.js'); // Index js file in models folder
 
-class LearningLanguage extends Model {};
-LearningLanguage.init({
-  language: DataTypes.STRING,
+class Language extends Model {};
+Language.init({
+  language: {
+    type: DataTypes.STRING,
+    unique: true,
+  }
 }, {
   sequelize,
+  modelName: 'Language',
   timestamps: false,
-  modelName: 'LearningLanguage',
 });
 
-class SpokenLanguage extends Model {};
-SpokenLanguage.init({
-  language: DataTypes.STRING,
-}, {
-  sequelize,
-  timestamps: false,
-  modelName: 'SpokenLanguage',
-});
-
-module.exports = {LearningLanguage, SpokenLanguage};
+module.exports = Language;

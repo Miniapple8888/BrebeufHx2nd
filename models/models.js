@@ -1,20 +1,19 @@
 const {sequelize} = require('./index'); // Index js file in models folder
+const { Sequelize, DataTypes } = require('sequelize');
 
 // Models
 const User = require('./user');
 const Interest = require('./interest');
-const {LearningLanguage, SpokenLanguage} = require('./language');
+const Language = require('./language');
+const User_Language = require('./user_language');
 
 async function synchronize() {
     // User - Interest
-    await sequelize.models.User.belongsToMany(sequelize.models.Interest, { through: 'User_Interest' });
-    await sequelize.models.Interest.belongsToMany(sequelize.models.User, { through: 'User_Interest' });
-    // User - Learning Language
-    await sequelize.models.User.belongsToMany(sequelize.models.LearningLanguage, { through: 'User_LearningLanguage' });
-    await sequelize.models.LearningLanguage.belongsToMany(sequelize.models.User, { through: 'User_LearningLanguage' });
-    // User - Spoken Language
-    await sequelize.models.User.belongsToMany(sequelize.models.SpokenLanguage, { through: 'User_SpokenLanguage' });
-    await sequelize.models.SpokenLanguage.belongsToMany(sequelize.models.User, { through: 'User_SpokenLanguage' });
+    await User.belongsToMany(Interest, { through: 'User_Interest' });
+    await Interest.belongsToMany(User, { through: 'User_Interest' });
+    // User - Language
+    await User.belongsToMany(Language, { through: User_Language})
+    await Language.belongsToMany(User, { through: User_Language})
 
     await sequelize.sync({force: false}).then(() => {
         console.log("Database synchronized.")
@@ -28,4 +27,4 @@ async function synchronize() {
 //     await user.addInterest(interest, {through: "User_Interest"});
 // })();
 
-module.exports = {User, Interest, LearningLanguage, SpokenLanguage, synchronize};
+module.exports = {User, Interest, Language, User_Language, synchronize};

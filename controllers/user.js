@@ -1,6 +1,6 @@
 const {check, body, validationResult} = require('express-validator'); // Middleware for credentials validation
 const bcrypt = require('bcrypt'); // Password encryption
-const {User, Interest} = require('../models/models'); // Database models
+const {User, Interest, Language, User_Language} = require('../models/models'); // Database models
 const { generateEmailVerificationToken, validateEmailVerificationToken } = require('../helpers.js'); // Email methods for validation
 const Mailer = require('../mailer/index.js'); // Email verification
 
@@ -56,6 +56,38 @@ module.exports = {
             }
         }
 
+        // Process languages and remove duplicates using hashtables
+        const spokenLangs = req.body.spokenLangs;
+        console.log(spokenLangs);
+        const learningLangs = req.body.learningLangs;
+        let spokenLangsf = {}; // f for filtered
+        for (let i = 0; i < spokenLangs.length; i++) {
+            const spokenLang = spokenLangs[i];
+            spokenLangsf[spokenLang.spokenLang] = spokenLang.proficiency;
+        }
+        let learningLangsf = {}; // f for filtered
+        for (let i = 0; i < learningLangs.length; i++) {
+            const learningLang = learningLangs[i];
+            learningLangsf[learningLang.learningLang] = learningLang.proficiency;
+        }
+        // reconvert hashtable into an array that can be processed for the database
+        let languages = [];
+        for (var spokenLangf in spokenLangsf) {
+            languages.push({
+                language: spokenLangf,
+                type: 'Spoken Language',
+                proficiency: spokenLangsf[spokenLangf]
+            })
+        }
+        for (var learningLangf in learningLangsf) {
+            languages.push({
+                language: learningLangf,
+                type: 'Learning Language',
+                proficiency: learningLangsf[learningLangf]
+            })
+        }
+        console.log(languages);
+
         // encrypt password
         bcrypt.hash(req.body.password, 10).then(passwordHash => {
             // create user
@@ -67,6 +99,18 @@ module.exports = {
                 passwordHash: passwordHash,
             }).then(user => {
                 user.addInterests(interests, {through: "User_Interest"});
+                // Creates User Language relation for the user who is signing up
+                for (let i = 0; i < languages.length; i++) {
+                    Language.findOne({where: {language: languages[i].language}
+                    }).then(lang_result => {
+                        User_Language.create({
+                            UserId: user.id,
+                            LanguageId: lang_result.id,
+                            proficiency: languages[i].proficiency,
+                            type: languages[i].type,
+                        });
+                    })
+                }
                 return res.status(202).send( { message: "Successfully created an account! Sent verification email!"} );
             });
         }).catch(err => { 
@@ -128,21 +172,21 @@ module.exports = {
                     return value;
                 }
             }).withMessage('Passwords must match.'),
-        // check('spokenLanguages')
-        //     .custom((value, { req }) => {
-        //         if (value.length > 0) {
-        //             return value;
-        //         } else {
-        //             return false;
-        //         }
-        //     }).withMessage('A minimum of 1 spoken language is required.'),
-        // check('learningLanguages')
-        //     .custom((value, { req }) => {
-        //         if (value.length > 0) {
-        //             return value;
-        //         } else {
-        //             return false;
-        //         }
-        //     }).withMessage('A minimum of 1 learning language is required.'),
+        check('spokenLangs')
+            .custom((value, { req }) => {
+                if (value.length > 0) {
+                    return value;
+                } else {
+                    return false;
+                }
+            }).withMessage('A minimum of 1 spoken language is required.'),
+        check('learningLangs')
+            .custom((value, { req }) => {
+                if (value.length > 0) {
+                    return value;
+                } else {
+                    return false;
+                }
+            }).withMessage('A minimum of 1 learning language is required.'),
     ]
 }
